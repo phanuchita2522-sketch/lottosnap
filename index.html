@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LottoSnap — ตรวจผลรางวัลฟรี</title>
+<meta name="theme-color" content="#0f766e">
+<meta property="og:title" content="LottoSnap — ตรวจผลรางวัลฟรี">
+<meta property="og:description" content="ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจได้หลายใบพร้อมกัน ฟรี ไม่มีการซื้อขายหรือพนัน">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22 role=%22img%22 aria-label=%22LottoSnap%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%232dd4bf%22/%3E%3Cstop offset=%221%22 stop-color=%22%230f766e%22/%3E%3C/linearGradient%3E%3ClinearGradient id=%22gold%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fde68a%22/%3E%3Cstop offset=%221%22 stop-color=%22%23f59e0b%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22512%22 height=%22512%22 rx=%22112%22 fill=%22url%28%23bg%29%22/%3E%3C%21-- viewfinder corners %28snap%29 --%3E%3Cg fill=%22none%22 stroke=%22%23fff%22 stroke-width=%2222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 opacity=%22.95%22%3E%3Cpath d=%22M104 168V132a28 28 0 0 1 28-28H168%22/%3E%3Cpath d=%22M344 104H380a28 28 0 0 1 28 28V168%22/%3E%3Cpath d=%22M408 344V380a28 28 0 0 1-28 28H344%22/%3E%3Cpath d=%22M168 408H132a28 28 0 0 1-28-28V344%22/%3E%3C/g%3E%3C%21-- ticket with side notches --%3E%3Cg transform=%22rotate%28-6 256 256%29%22%3E%3Cpath fill=%22%23fff%22 d=%22M166 186H346a16 16 0 0 1 16 16V236a20 20 0 0 0 0 40V310a16 16 0 0 1-16 16H166a16 16 0 0 1-16-16V276a20 20 0 0 0 0-40V202a16 16 0 0 1 16-16Z%22/%3E%3Cg fill=%22%230f766e%22%3E%3Ccircle cx=%22190%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22218%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22246%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22274%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22302%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22330%22 cy=%22222%22 r=%229%22/%3E%3C/g%3E%3Crect x=%22180%22 y=%22250%22 width=%22152%22 height=%2210%22 rx=%225%22 fill=%22%2399f6e4%22/%3E%3Crect x=%22180%22 y=%22274%22 width=%22104%22 height=%2210%22 rx=%225%22 fill=%22%2399f6e4%22/%3E%3C/g%3E%3C%21-- check badge %28result%29 --%3E%3Ccircle cx=%22336%22 cy=%22322%22 r=%2252%22 fill=%22url%28%23gold%29%22 stroke=%22%23fff%22 stroke-width=%2210%22/%3E%3Cpath d=%22M312 322l18 18 32-38%22 fill=%22none%22 stroke=%22%230f766e%22 stroke-width=%2216%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'class' }</script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+  .chip{display:inline-flex;align-items:center;border-radius:9999px;padding:.3rem .8rem;font-size:.8rem;font-weight:500;white-space:nowrap}
+  .sb-hide::-webkit-scrollbar{display:none}.sb-hide{scrollbar-width:none}
+  video{background:#000}
+</style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen" style="font-family:'Noto Sans Thai',system-ui,sans-serif">
+
+<header class="sticky top-0 z-30 bg-teal-700 text-white shadow">
+  <div class="max-w-3xl mx-auto px-3 pt-2 pb-2">
+    <div class="flex items-center justify-between">
+      <button onclick="go('home')" class="flex items-center gap-2 font-extrabold text-lg" aria-label="LottoSnap หน้าแรก"><svg class="w-8 h-8 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LottoSnap"><defs><linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient><linearGradient id="hgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#hbg)"/><!-- viewfinder corners (snap) --><g fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity=".95"><path d="M104 168V132a28 28 0 0 1 28-28H168"/><path d="M344 104H380a28 28 0 0 1 28 28V168"/><path d="M408 344V380a28 28 0 0 1-28 28H344"/><path d="M168 408H132a28 28 0 0 1-28-28V344"/></g><!-- ticket with side notches --><g transform="rotate(-6 256 256)"><path fill="#fff" d="M166 186H346a16 16 0 0 1 16 16V236a20 20 0 0 0 0 40V310a16 16 0 0 1-16 16H166a16 16 0 0 1-16-16V276a20 20 0 0 0 0-40V202a16 16 0 0 1 16-16Z"/><g fill="#0f766e"><circle cx="190" cy="222" r="9"/><circle cx="218" cy="222" r="9"/><circle cx="246" cy="222" r="9"/><circle cx="274" cy="222" r="9"/><circle cx="302" cy="222" r="9"/><circle cx="330" cy="222" r="9"/></g><rect x="180" y="250" width="152" height="10" rx="5" fill="#99f6e4"/><rect x="180" y="274" width="104" height="10" rx="5" fill="#99f6e4"/></g><!-- check badge (result) --><circle cx="336" cy="322" r="52" fill="url(#hgold)" stroke="#fff" stroke-width="10"/><path d="M312 322l18 18 32-38" fill="none" stroke="#0f766e" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg><span>LottoSnap</span></button>
+      <div class="flex items-center gap-1">
+        <button onclick="go('notifs')" class="relative p-2 text-lg" aria-label="การแจ้งเตือน">🔔<span id="badge" class="hidden absolute top-0 right-0 bg-rose-500 text-[10px] rounded-full min-w-[16px] h-4 px-1 text-center leading-4"></span></button>
+        <button onclick="go('settings')" class="p-2 text-lg" aria-label="ตั้งค่า">⚙️</button>
+        <button onclick="go('profile')" id="avatar" class="w-9 h-9 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-xl" aria-label="โปรไฟล์"></button>
+      </div>
+    </div>
+    <div id="chips" class="flex gap-2 overflow-x-auto pt-2 sb-hide"></div>
+  </div>
+</header>
+
+<main id="view" class="max-w-3xl mx-auto px-3 py-4 pb-32"></main>
+
+<nav id="nav" class="fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+  <div class="max-w-3xl mx-auto grid grid-cols-5 text-center text-[11px]" style="padding-bottom:env(safe-area-inset-bottom)"></div>
+</nav>
+
+<div id="modal"></div>
+<div id="adroot"></div>
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-24 z-[70] hidden max-w-[90vw] rounded-xl bg-slate-900 text-white text-sm px-4 py-2 shadow-lg"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   LottoSnap — เว็บแอปไฟล์เดียว (HTML/JS + Tailwind)
+   ฟรี · ตรวจผลรางวัลอย่างเดียว · ไม่มีการซื้อขายหรือพนัน
+   ============================================================ */
+
+/* ---------- ตั้งค่าโฆษณา (ใส่โค้ดโฆษณาจริงที่ mount) ---------- */
+const AD_CONFIG = {
+  enabled: true,          // โฆษณาคั่นก่อนใช้กล้อง/เสียง
+  seconds: 5,             // เวลารอก่อนกดไปต่อ
+  // ใส่โค้ดโฆษณาจริงของคุณที่นี่ (เช่น AdSense / GPT / SDK ของเครือข่ายโฆษณา)
+  // el = กล่องโฆษณา, place = 'camera' | 'voice'
+  mount(el, place) {
+    el.innerHTML = '<div class="p-6 text-slate-500 text-sm">[พื้นที่โฆษณา — ' + place + ']<br>วางโค้ดโฆษณาใน AD_CONFIG.mount()</div>';
+  }
+};
+const DEFAULT_API = ''; // ว่าง = ใช้ชุดข้อมูลชุมชนในตัว | หรือ URL ของบอท/API ที่มี /latest /list/{หน้า} /lotto/{id} /other/{ชนิด}
+
+/* ---------- Utils ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => n ? Number(n).toLocaleString('th-TH') + ' บาท' : '—';
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('ls_' + k); return v ? JSON.parse(v) : d } catch (e) { return d } },
+  set(k, v) { try { localStorage.setItem('ls_' + k, JSON.stringify(v)) } catch (e) { toast('พื้นที่จัดเก็บเต็ม/ถูกบล็อก') } }
+};
+const BTN = 'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-95 disabled:opacity-50';
+const BP = BTN + ' bg-teal-600 text-white hover:bg-teal-700';
+const BS = BTN + ' bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600';
+const BD = BTN + ' bg-rose-600 text-white hover:bg-rose-700';
+const INP = 'w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-teal-500';
+const CARD = 'rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-4';
+const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.add('hidden'), 3200) };
+
+/* ---------- ชนิดหวย ---------- */
+const LOTTO = {
+  thai:   { name: 'หวยรัฐบาลไทย', icon: '🇹🇭', len: [6], max: 6 },
+  gsb:    { name: 'ออมทรัพย์ ธ.ก.ส.', icon: '🏦', len: [7, 6], max: 10 },
+  lao:    { name: 'หวยลาว', icon: '🇱🇦', len: [4], max: 4 },
+  hanoi:  { name: 'หวยฮานอย', icon: '🇻🇳', len: [5, 4], max: 5 },
+  my:     { name: 'หวยมาเลย์', icon: '🇲🇾', len: [4], max: 4 },
+};
+const G = (id, name, match, reward = 0, numbers = []) => ({ id, name, match, reward, numbers });
+function presetGroups(lot) {
+  switch (lot) {
+    case 'thai': return [G('prizeFirst', 'รางวัลที่ 1', 'full', 6000000), G('prizeFirstNear', 'ข้างเคียงรางวัลที่ 1', 'full', 100000), G('prizeSecond', 'รางวัลที่ 2', 'full', 200000), G('prizeThird', 'รางวัลที่ 3', 'full', 80000), G('prizeForth', 'รางวัลที่ 4', 'full', 40000), G('prizeFifth', 'รางวัลที่ 5', 'full', 20000), G('runningNumberFrontThree', 'เลขหน้า 3 ตัว', 'first', 4000), G('runningNumberBackThree', 'เลขท้าย 3 ตัว', 'last', 4000), G('runningNumberBackTwo', 'เลขท้าย 2 ตัว', 'last', 2000)];
+    case 'gsb': return [G('g1', 'รางวัลที่ 1', 'full'), G('g3', 'เลขท้าย 3 ตัว', 'last'), G('g2', 'เลขท้าย 2 ตัว', 'last')];
+    case 'lao': return [G('l4', '4 ตัวตรง', 'full'), G('l3', '3 ตัวบน', 'last'), G('l2', '2 ตัวบน', 'last'), G('l2b', '2 ตัวล่าง', 'first')];
+    case 'hanoi': return [G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
+    case 'my': return [G('m1', 'รางวัลที่ 1', 'full'), G('m2', 'รางวัลที่ 2', 'full'), G('m3', 'รางวัลที่ 3', 'full'), G('ms', 'Special (10 ตัว)', 'full'), G('mc', 'Consolation (10 ตัว)', 'full')];
+  }
+  return [];
+}
+/* ---------- ข้อมูลตัวอย่าง (ไว้ทดสอบการตรวจเมื่อดึงผลจริงไม่ได้ — ไม่ใช่ผลรางวัลจริง) ---------- */
+function seeded(n, len, seed) { const out = []; let x = seed; while (out.length < n) { x = (Math.imul(x, 1103515245) + 12345) & 0x7fffffff; const v = String(x % Math.pow(10, len)).padStart(len, '0'); if (!out.includes(v)) out.push(v) } return out }
+const DEMO_NUM = {
+  thai: { prizeFirst: ['123456'], prizeFirstNear: ['123455', '123457'], prizeSecond: seeded(5, 6, 11), prizeThird: seeded(10, 6, 22), prizeForth: seeded(50, 6, 33), prizeFifth: seeded(100, 6, 44), runningNumberFrontThree: ['123', '789'], runningNumberBackThree: ['456', '012'], runningNumberBackTwo: ['56'] },
+  gsb: { g1: ['1234567'], g3: ['567'], g2: ['67'] },
+  lao: { l4: ['4036'], l3: ['036'], l2: ['36'], l2b: ['40'] },
+  hanoi: { h3: ['345'], h2: ['45'], h2b: ['90'] },
+  my: { m1: ['1234'], m2: ['5678'], m3: ['9012'], ms: seeded(10, 4, 55), mc: seeded(10, 4, 66) },
+};
+const DEMO_HINT = { thai: '123456', gsb: '1234567', lao: '4036', hanoi: '12345', my: '1234' };
+function demoResult(lot) {
+  const groups = presetGroups(lot).map(g => Object.assign({}, g, { numbers: (DEMO_NUM[lot] || {})[g.id] || [] }));
+  return { lottery: lot, date: 'ตัวอย่าง (เดโม)', id: 'demo', groups, source: 'demo' };
+}
+const MATCH_LABEL = { full: 'ตรงทั้งหมด', last: 'ตรงเลขท้าย', first: 'ตรงเลขหน้า' };
+
+/* ---------- State ---------- */
+const S = {
+  view: 'home', lottery: LS.get('lottery', 'thai'),
+  set: Object.assign({ theme: 'auto', pre: true, api: DEFAULT_API, notif: true, scale: 1, remind: false, lead: 15, sched: {}, web: true, publicProxy: true, proxy: '' }, LS.get('settings', {})),
+  profile: Object.assign({ name: '', avatar: '🙂', img: null }, LS.get('profile', {})),
+  notifs: LS.get('notifs', []), checks: LS.get('checks', []), mres: LS.get('mres', {}),
+  tickets: [{ v: '', src: 'manual', ok: true }], cands: [], notes: [],
+  draw: null, drawState: 'idle', lastCheck: null, useManual: false, demo: {},
+  listCache: [], listPage: 0, listEnd: false, drawCache: {}, stats: null, statsBusy: false,
+  hTab: 'stats', statDay: null, webBusy: {}, webErr: {}, del: LS.get('mresDel', {}), started: Date.now(), uid: 0, edit: null,
+};
+if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; // ค่าเก่าจากเวอร์ชันที่เคยมียี่กี
+const saveSet = () => LS.set('settings', S.set);
+if (/rayriffy\.com/.test(S.set.api || '')) { S.set.api = ''; saveSet() } // ย้ายค่าเก่า: โดเมนนี้เลิกให้บริการแล้ว
+
+/* ---------- ผลรางวัล ---------- */
+function curResult() {
+  if (S.demo[S.lottery]) return S.demo[S.lottery];
+  if (S.lottery === 'thai' && S.draw && !S.useManual) return S.draw;
+  const m = S.mres[S.lottery]; return (m && m[0]) || null;
+}
+const grp = (r, id) => (r.groups.find(g => g.id === id) || { numbers: [] });
+function normThai(j, id) {
+  const r = j.response || j.data || j;
+  if (!r || !Array.isArray(r.prizes)) throw new Error('รูปแบบข้อมูลจาก API ไม่รองรับ');
+  const groups = r.prizes.map(p => G(p.id, p.name, 'full', +p.reward || 0, (p.number || []).map(String)));
+  (r.runningNumbers || []).forEach(p => groups.push(G(p.id, p.name, /Front/i.test(p.id) ? 'first' : 'last', +p.reward || 0, (p.number || []).map(String))));
+  return { lottery: 'thai', date: r.date || '', id: id || r.id || r.endpoint || '', groups, source: 'api' };
+}
+function netErr(err) { const net = err && (err.name === 'AbortError' || err instanceof TypeError || /Failed to fetch|NetworkError/i.test(err.message)); return net ? 'เชื่อมต่อแหล่งข้อมูลไม่ได้ (ออฟไลน์ / ถูกบล็อก / เซิร์ฟเวอร์ล่ม)' : (err ? err.message : 'ไม่ทราบสาเหตุ') }
+const bases = () => { const b = (S.set.api || '').trim().replace(/\/+$/, ''); return b ? [b] : [] };
+async function jget(path) { // path เริ่มด้วย "/" — ลองแหล่งที่ตั้งไว้ก่อน แล้วค่อยลองค่าเริ่มต้น
+  let err;
+  if (!bases().length) throw new Error('ยังไม่ได้ตั้งแหล่งข้อมูลส่วนตัว');
+  for (const b of bases()) {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
+    try { const r = await fetch(b + path, { cache: 'no-store', signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json() }
+    catch (e) { err = e } finally { clearTimeout(t) }
+  }
+  throw new Error(netErr(err));
+}
+/* ---------- ชุดข้อมูลชุมชน (ค่าเริ่มต้น): github.com/huayreview/thai-lottery-results — CC BY 4.0 ---------- */
+const TH_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const DS_URLS = ['https://raw.githubusercontent.com/huayreview/thai-lottery-results/main/thai-lottery-results.json', 'https://cdn.jsdelivr.net/gh/huayreview/thai-lottery-results@main/thai-lottery-results.json'];
+const DS_MAP = { prizeFirst: 'first_prize', prizeFirstNear: 'near_first_prize', prizeSecond: 'second_prize', prizeThird: 'third_prize', prizeForth: 'fourth_prize', prizeFifth: 'fifth_prize', runningNumberFrontThree: 'front_three_digits', runningNumberBackThree: 'last_three_digits', runningNumberBackTwo: 'last_two_digits' };
+const DS_LEN = { runningNumberFrontThree: 3, runningNumberBackThree: 3, runningNumberBackTwo: 2 };
+let DS = null;
+const thaiDateISO = iso => { const [y, m, d] = iso.split('-').map(Number); return d + ' ' + TH_MONTHS[m - 1] + ' ' + (y + 543) };
+async function loadDataset() {
+  if (DS) return DS;
+  let err;
+  for (const u of DS_URLS) {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const r = await fetch(u, { signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(); if (!j || !Array.isArray(j.draws) || !j.draws.length) throw new Error('รูปแบบชุดข้อมูลไม่ถูกต้อง');
+      DS = j.draws.filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d.draw_date)).sort((a, b) => a.draw_date < b.draw_date ? 1 : -1); return DS;
+    } catch (e) { err = e } finally { clearTimeout(t) }
+  }
+  throw new Error(netErr(err));
+}
+function fromDS(d) {
+  const groups = presetGroups('thai').map(g => {
+    const len = DS_LEN[g.id] || 6;
+    return Object.assign({}, g, { numbers: (d[DS_MAP[g.id]] || []).map(x => String(x).padStart(len, '0')) });
+  });
+  const ok = (id, n) => { const g = groups.find(x => x.id === id).numbers; return g.length && g.every(x => /^\d+$/.test(x) && x.length === n) };
+  if (!ok('prizeFirst', 6) || !ok('runningNumberBackTwo', 2)) throw new Error('ข้อมูลงวด ' + d.draw_date + ' ไม่ครบ');
+  return { lottery: 'thai', date: d.draw_date_th || thaiDateISO(d.draw_date), id: d.draw_date, groups, source: 'dataset' };
+}
+const customApi = () => (S.set.api || '').trim();
+async function loadLatest() {
+  if (customApi()) { try { return normThai(await jget('/latest')) } catch (e) { toast('แหล่งข้อมูลของคุณใช้ไม่ได้ ใช้ชุดข้อมูลสำรองแทน') } }
+  let last; // งวดล่าสุดอาจยังกรอกไม่ครบ → ข้ามไปงวดที่สมบูรณ์ล่าสุด
+  for (const d of (await loadDataset()).slice(0, 3)) { try { return fromDS(d) } catch (e) { last = e } }
+  throw last;
+}
+async function loadDraw(id) {
+  if (customApi() && S.listMode !== 'dataset') { try { return normThai(await jget('/lotto/' + id), id) } catch (e) { if (!/^\d{4}-\d{2}-\d{2}$/.test(id)) throw e } }
+  const d = (await loadDataset()).find(x => x.draw_date === id); if (!d) throw new Error('ไม่พบงวด ' + id); return fromDS(d);
+}
+async function fetchListPage() {
+  if (customApi() && S.listMode !== 'dataset') {
+    try {
+      S.listPage++;
+      const j = await jget('/list/' + S.listPage);
+      const items = j.response || j.data || [];
+      if (!items.length) S.listEnd = true;
+      S.listCache.push(...items); S.listMode = 'api'; return;
+    } catch (e) { S.listPage--; if (S.listCache.length) throw e }
+  }
+  const ds = await loadDataset(); S.listMode = 'dataset';
+  S.listCache = ds.filter(d => { try { fromDS(d); return true } catch (e) { return false } }).map(d => ({ id: d.draw_date, date: d.draw_date_th || thaiDateISO(d.draw_date) })); S.listEnd = true; // ซ่อนงวดที่ข้อมูลยังไม่ครบ
+}
+async function loadHome() {
+  if (S.lottery !== 'thai') return render();
+  S.drawState = 'loading'; render();
+  try {
+    S.draw = await loadLatest(); S.drawState = 'ok'; delete S.demo.thai;
+    const last = LS.get('lastDraw', null);
+    if (S.set.notif && last && last !== S.draw.date) addNotif('🎉 งวดใหม่ออกแล้ว', 'ผลรางวัลงวด ' + S.draw.date + ' พร้อมตรวจแล้ว');
+    LS.set('lastDraw', S.draw.date);
+  } catch (e) { S.drawState = 'err'; S.drawErr = e.message }
+  render();
+}
+/* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{gsb|lao|hanoi|my} → {date, groups:[…]} */
+async function loadOtherApi(lot) {
+  if (lot === 'thai' || !customApi()) return;
+  try {
+    try {   // ประวัติย้อนหลังที่บอทสะสมไว้ (ไม่มีไฟล์ = ข้ามเงียบ ๆ)
+      const hs = await jget('/other/' + lot + '-history');
+      if (hs && Array.isArray(hs.draws)) {
+        const have = new Set((S.mres[lot] || []).map(r => r.date));
+        const add = hs.draws.filter(d => d && d.date && Array.isArray(d.groups) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: d.groups, source: 'bot' }));
+        if (add.length) {
+          S.mres[lot] = [...(S.mres[lot] || []), ...add].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
+          if (S.lottery === lot) render();
+        }
+      }
+    } catch (e) { }
+    const j = await jget('/other/' + lot);
+    if (!j || !Array.isArray(j.groups) || !j.groups.length || (S.del[lot] || []).includes(j.date)) return;
+    const cur = (S.mres[lot] || []).find(r => r.date === j.date) || (S.mres[lot] || [])[0];
+    if (cur && (cur.date === j.date || JSON.stringify(cur.groups) === JSON.stringify(j.groups))) return;
+    const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot' };
+    S.mres[lot] = [res, ...(S.mres[lot] || [])].slice(0, 120); LS.set('mres', S.mres);
+    if (S.set.notif) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + (j.date || '—'));
+    if (S.lottery === lot) { S.lastCheck = null; S.useManual = false; delete S.demo[lot]; render() }
+  } catch (e) { /* ไม่มีไฟล์/ออฟไลน์ — ข้ามเงียบ ๆ */ }
+}
+
+
+/* ---------- ดึงผลจากเว็บโดยตรง (ฮานอย / ลาว / ธ.ก.ส.) ----------
+   เบราว์เซอร์อ่านเว็บอื่นตรง ๆ ไม่ได้ (CORS) จึงผ่านพร็อกซี: (1) พร็อกซีของคุณเอง (Cloudflare Worker — ดู cf-worker.js ในชุดบอท) (2) พร็อกซีสาธารณะแบบ best-effort
+   ตัวอ่านดูที่ "รูปแบบจำนวนหลักของผลรางวัล" ไม่ใช่โครง HTML — ถ้าไม่ตรงรูปแบบจะไม่บันทึก ไม่เดา */
+const p2 = n => String(n).padStart(2, '0');
+const WEB_NOISE = [/\d{1,2}\s*[\/\-.]\s*\d{1,2}\s*[\/\-.]\s*\d{2,4}/g, /\d{4}\s*[\/\-.]\s*\d{1,2}\s*[\/\-.]\s*\d{1,2}/g,
+  /\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม)[a-zก-๙.]*\s*\d{2,4}/gi,
+  /(?:ngày\s*)?\d{1,2}\s*tháng\s*\d{1,2}(?:\s*năm\s*\d{4})?/gi, /\d{1,2}\s*:\s*\d{2}(?::\d{2})?/g, /(?<!\d)\d{1,2}h\d{0,2}(?![a-z0-9])/gi, /\b\d{1,5}\s*\/\s*\d{2,4}\b/g];
+const webTokens = t => WEB_NOISE.reduce((s, re) => s.replace(re, ' '), t).match(/(?<!\d)\d+(?!\d)/g)?.filter(x => x.length >= 2) || [];
+function winFind(toks, lens) { for (let i = 0; i + lens.length <= toks.length; i++) if (lens.every((n, j) => toks[i + j].length === n)) return toks.slice(i, i + lens.length); return null }
+const htmlToText = html => { const t = html.replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' '); const ta = document.createElement('textarea'); ta.innerHTML = t; return ta.value.replace(/\s+/g, ' ') };
+const mkHanoi = (db, g1) => [G('h3', '3 ตัวบน', 'last', 0, [db.slice(-3)]), G('h2', '2 ตัวบน', 'last', 0, [db.slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [g1.slice(-2)])];
+const mkLao = n4 => [G('l4', '4 ตัวตรง', 'full', 0, [n4]), G('l3', '3 ตัวบน', 'last', 0, [n4.slice(1)]), G('l2', '2 ตัวบน', 'last', 0, [n4.slice(2)]), G('l2b', '2 ตัวล่าง', 'first', 0, [n4.slice(0, 2)])];
+const XS_LEN = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2];
+function parseXSMB(t) {
+  const toks = webTokens(t); let w = winFind(toks, XS_LEN);
+  if (!w) { w = winFind(toks, [...XS_LEN].reverse()); if (w) w.reverse() }
+  if (!w) throw new Error('ยังไม่พบผล XSMB ครบ 27 ตัวตามรูปแบบ (อาจยังไม่ออกผล)');
+  return mkHanoi(w[0], w[1]);
+}
+function parseLao6(t) {   // หวยลาวพัฒนา: เลข 6 หลัก + ท้าย 4 + ท้าย 3 + ท้าย 2 ต้องสอดคล้องกัน (ตรวจโครงสร้างซ้ำ)
+  const toks = webTokens(t);
+  for (let i = 0; i + 4 <= toks.length; i++) {
+    const [a, b, c, d] = toks.slice(i, i + 4);
+    if (a.length === 6 && b.length === 4 && c.length === 3 && d.length === 2 && a.endsWith(b) && b.endsWith(c) && c.endsWith(d)) return mkLao(b);
+  }
+  throw new Error('ยังไม่พบผลหวยลาว (เลข 6 หลักพร้อมท้าย 4/3/2 ตัว) — อาจยังไม่ออกผล');
+}
+function parseGSB(t) {
+  const L = { first: /รางวัลที่\s*1(?!\d)/g, last4: /ท้าย\s*4\s*ตัว/g, last3: /ท้าย\s*3\s*ตัว/g, last2: /ท้าย\s*2\s*ตัว/g, skip: /ดิจิทัล|ดิจิตอล|digital/gi }, LEN = { first: 7, last4: 4, last3: 3, last2: 2 };
+  const s = WEB_NOISE.reduce((x, re) => x.replace(re, ' '), t), marks = [];
+  for (const k in L) for (const m of s.matchAll(L[k])) marks.push([m.index, m.index + m[0].length, k === 'skip' ? null : k]);
+  marks.sort((a, b) => a[0] - b[0]); const got = {};
+  marks.forEach(([, end, key], i) => {
+    if (!key || got[key]) return;
+    const seg = s.slice(end, i + 1 < marks.length ? marks[i + 1][0] : s.length);
+    let toks = (seg.match(/(?<!\d)\d+(?!\d)/g) || []).filter(x => x.length === LEN[key]); if (key === 'first') toks = toks.slice(0, 1);
+    if (toks.length) got[key] = toks;
+  });
+  if (!got.first || !got.last3) throw new Error('ไม่พบรางวัลที่ 1 (7 หลัก) หรือเลขท้าย 3 ตัวตามป้ายรางวัล');
+  const out = [G('g1', 'รางวัลที่ 1', 'full', 0, got.first)];
+  if (got.last4) out.push(G('g4', 'เลขท้าย 4 ตัว', 'last', 0, got.last4));
+  out.push(G('g3', 'เลขท้าย 3 ตัว', 'last', 0, got.last3));
+  if (got.last2) out.push(G('g2', 'เลขท้าย 2 ตัว', 'last', 0, got.last2));
+  const m = /งวด(?:ประจำ)?(?:วัน)?ที่\s*(\d{1,2})\s*([ก-๙.]+)\s*(\d{4})/.exec(t);
+  const mi = m ? TH_MONTHS.findIndex(x => x === m[2]) : -1;
+  return { groups: out, date: m && mi >= 0 ? `${+m[1]} ${TH_MONTHS[mi]} ${m[3]}` : null };
+}
+const TH_ABBR = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const thaiLabel = d => `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+function afterDate(text, d, strict, numeric) {   // ตัดข้อความให้เหลือหลังวันที่ที่ต้องการ (กันไปหยิบผลงวดอื่นในหน้าเดียวกัน)
+  const y = d.getFullYear() + 543, mo = d.getMonth();
+  const re = numeric ? new RegExp(`(?<!\\d)0?${d.getDate()}\\s*[/.\\-]\\s*0?${mo + 1}\\s*[/.\\-]\\s*${d.getFullYear()}(?!\\d)`)
+    : new RegExp(`(?<!\\d)${d.getDate()}\\s*(?:${reEsc(TH_MONTHS[mo])}|${reEsc(TH_ABBR[mo])})\\s*(?:${y}|${y % 100})(?!\\d)`);
+  const m = re.exec(text);
+  if (m) {
+    let rest = text.slice(m.index + m[0].length);
+    if (strict && !numeric) {   // หน้ารวมหลายงวด: ตัดที่วันที่ถัดไป กันเอาเลขของงวดอื่นมาติดป้ายวันที่นี้
+      const nx = new RegExp(`(?<!\\d)\\d{1,2}\\s*(?:${[...TH_MONTHS, ...TH_ABBR].map(reEsc).join('|')})\\s*(?:\\d{4}|\\d{2})(?!\\d)`).exec(rest);
+      if (nx) rest = rest.slice(0, nx.index);
+    }
+    return rest;
+  }
+  if (strict) throw new Error('ไม่พบงวดวันที่ ' + thaiLabel(d) + ' ในหน้าเว็บ (ยังไม่ออก/โครงหน้าเปลี่ยน)');
+  return text;
+}
+const WEB = {
+  hanoi: { host: 'xosominhngoc.com', dated: d => `https://www.xosominhngoc.com/ket-qua-xo-so/mien-bac/${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()}.html`, parse: (t) => ({ groups: parseXSMB(t) }), strict: true, numeric: true, hist: true },
+  lao: { host: 'lottery.kapook.com', dated: d => `https://lottery.kapook.com/laolottery/${p2(d.getDate())}${p2(d.getMonth() + 1)}${d.getFullYear() + 543}`, parse: (t) => ({ groups: parseLao6(t) }), strict: true, hist: true },
+  gsb: { host: 'baac.or.th', url: 'https://www.baac.or.th/lottery-results', parse: parseGSB },
+};
+async function webText(url) {
+  const enc = encodeURIComponent(url), tries = [];
+  if ((S.set.proxy || '').includes('{url}')) tries.push(S.set.proxy.replace('{url}', enc));
+  tries.push(url);
+  if (S.set.publicProxy !== false) tries.push('https://api.allorigins.win/raw?url=' + enc, 'https://corsproxy.io/?url=' + enc, 'https://api.codetabs.com/v1/proxy?quest=' + url);
+  let err;
+  for (const u of tries) {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
+    try { const r = await fetch(u, { signal: ctl.signal, cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); const html = await r.text(); if (html.length < 800) throw new Error('หน้าว่าง'); return htmlToText(html) }
+    catch (e) { err = e } finally { clearTimeout(t) }
+  }
+  const e = new Error('ดึงหน้าเว็บไม่ได้ (เบราว์เซอร์ถูกบล็อก CORS และพร็อกซีใช้ไม่ได้) — ตั้งพร็อกซีของคุณเองในตั้งค่า'); e.net = true; e.cause = err; throw e;
+}
+async function webDraw(lot, d) {   // ดึงงวดวันที่ d ของหวยที่มีหน้าแยกตามวัน → { date, groups }
+  const W = WEB[lot], text = afterDate(await webText(W.dated(d)), d, W.strict, W.numeric), r = W.parse(text);
+  return { date: thaiLabel(d), groups: r.groups };
+}
+function saveWeb(lot, date, groups, quiet) {
+  const l = S.mres[lot] || [];
+  if (l.some(r => r.date === date) || (S.del[lot] || []).includes(date)) return false;
+  const res = { lottery: lot, date, id: 'web-' + date, groups, source: 'web' };
+  S.mres[lot] = [...l, res].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
+  if (!quiet && S.set.notif && S.mres[lot][0] === res) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + date);
+  return true;
+}
+async function loadWeb(lot) {
+  const W = WEB[lot]; if (!W || S.set.web === false || S.webBusy[lot]) return;
+  S.webBusy[lot] = true; S.webErr[lot] = null; if (S.lottery === lot) render();
+  try {
+    if (W.url) { const t = await webText(W.url), r = W.parse(t); if (!r.date) throw new Error('อ่านวันที่งวดไม่ได้ จึงไม่บันทึก'); saveWeb(lot, r.date, r.groups) }
+    else {
+      const now = ictNow(); let got = null, last;
+      for (let i = 0; i < 7 && !got; i++) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i); try { got = await webDraw(lot, d) } catch (e) { last = e; if (e.net) break } }
+      if (!got) throw last || new Error('ยังไม่พบผลล่าสุด');
+      saveWeb(lot, got.date, got.groups);
+    }
+  } catch (e) { S.webErr[lot] = e.message }
+  S.webBusy[lot] = false; S.lastCheck = null; if (S.lottery === lot) render();
+}
+async function loadWebHistory(lot, days) {
+  const W = WEB[lot]; if (!W || !W.dated || S.webBusy[lot]) return;
+  S.webBusy[lot] = true; S.webErr[lot] = null; render(); const now = ictNow(); let ok = 0, tried = 0, net = false;
+  const todo = Array.from({ length: days }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)).filter(d => !(S.mres[lot] || []).some(r => r.date === thaiLabel(d)));
+  let k = 0;
+  await Promise.all(Array.from({ length: 3 }, async () => {
+    while (k < todo.length && !net) { const d = todo[k++]; tried++; try { const r = await webDraw(lot, d); if (saveWeb(lot, r.date, r.groups, true)) ok++ } catch (e) { if (e.net) net = true } if (S.lottery === lot && !closeModalBusy) { /* progress via toast below */ } }
+  }));
+  S.webBusy[lot] = false; if (net && !ok) S.webErr[lot] = 'ดึงหน้าเว็บไม่ได้ — ตั้งพร็อกซีของคุณเองในตั้งค่า';
+  toast(`ดึงย้อนหลังแล้ว ${ok} งวด (จาก ${tried} วันที่ลอง วันที่ไม่มีผลถูกข้าม)`); render();
+}
+let closeModalBusy = false;
+async function loadOther(lot) {
+  if (lot === 'thai') return;
+  if (customApi()) await loadOtherApi(lot);
+  loadWeb(lot);
+}
+const webStatus = lot => {
+  if (!WEB[lot]) return 'หวยชนิดนี้ยังไม่มีเว็บที่ดึงอัตโนมัติผ่านแอปได้ — กรอกผลที่ประกาศแล้วเอง หรือเชื่อมบอทส่วนตัวที่หน้าตั้งค่า';
+  if (S.webBusy[lot]) return '⏳ กำลังดึงผลจากเว็บ…';
+  return (S.webErr[lot] ? `<span class="text-rose-600">${esc(S.webErr[lot])}</span><br>` : '') + 'ดึงจาก ' + WEB[lot].host + ' อัตโนมัติ — ถ้าไม่สำเร็จ ลองใหม่ ตั้งพร็อกซีของคุณเอง หรือกรอกผลเอง';
+};
+
+/* ---------- ตัวตรวจรางวัล (1 ใบถูกได้หลายรางวัล) ---------- */
+function checkTicket(t, res) {
+  const hits = [];
+  for (const g of res.groups) {
+    for (const num of g.numbers) {
+      if (!num) continue;
+      let ok = false;
+      if (g.match === 'full') ok = t === num;
+      else if (g.match === 'last') ok = t.length >= num.length && t.slice(-num.length) === num;
+      else if (g.match === 'first') ok = t.length >= num.length && t.slice(0, num.length) === num;
+      if (ok) { hits.push({ g, num }); break; }
+    }
+  }
+  return hits;
+}
+
+/* ---------- Notifications ---------- */
+function addNotif(t, b) {
+  S.notifs.unshift({ id: Date.now() + Math.random(), t, b, ts: Date.now(), read: false });
+  S.notifs = S.notifs.slice(0, 50); LS.set('notifs', S.notifs); chrome();
+}
+
+/* ---------- สายมู: เลขมงคลประจำวัน + ตำราฝัน (เพื่อความบันเทิงเท่านั้น) ---------- */
+const DAYCOLOR = [['แดง', '#dc2626'], ['เหลือง', '#eab308'], ['ชมพู', '#ec4899'], ['เขียว', '#16a34a'], ['ส้ม', '#f97316'], ['ฟ้า', '#0ea5e9'], ['ม่วง', '#7c3aed']];  // สีประจำวันตามความเชื่อไทย อาทิตย์→เสาร์
+const FORTUNES = ['วันนี้เหมาะกับการเริ่มเรื่องเล็ก ๆ ที่เลื่อนไว้', 'ใจเย็นกับคำพูด คำดี ๆ จะกลับมาหาคุณ', 'มีเรื่องน่ายินดีเล็ก ๆ ระหว่างวัน ลองมองหา', 'จัดโต๊ะ จัดกระเป๋า จัดใจ แล้วจะโล่งขึ้น', 'ทักทายคนที่ไม่ได้คุยนาน อาจได้ข่าวดี', 'เก็บเงินเล็ก ๆ วันนี้ ดีต่อใจในวันหน้า', 'ระวังเรื่องรีบร้อน ช้าลงนิดเดียวปลอดภัยขึ้นมาก', 'ทำบุญเล็ก ๆ หรือช่วยใครสักคน ใจจะเบา', 'วันนี้ไอเดียดี ๆ มาตอนผ่อนคลาย', 'ดื่มน้ำ พักสายตา ร่างกายคือโชคลาภจริง ๆ', 'เรื่องที่กังวลมักไม่หนักเท่าที่คิด', 'ยิ้มให้คนแรกที่เจอวันนี้ ลองดู'];
+const hash32 = s => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) } return h >>> 0 };
+const rng32 = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 };
+const ictISO = () => { const d = ictNow(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') };
+function dailyLucky(iso) {
+  const [y, m, d] = iso.split('-').map(Number), wd = new Date(y, m - 1, d).getDay();
+  const bd = S.set.birthDay, r = rng32(hash32(iso + '|' + (bd == null ? '-' : bd)));
+  const num = n => Array.from({ length: n }, () => Math.floor(r() * 10)).join('');
+  const two = [...new Set([num(2), num(2), num(2)])], three = [...new Set([num(3), num(3)])];
+  return { wd, color: DAYCOLOR[wd], two, three, fortune: FORTUNES[Math.floor(r() * FORTUNES.length)], mine: bd == null ? null : DAYCOLOR[bd] };
+}
+function luckyStreak() {   // จำนวนวันติดต่อกันที่เปิดดู (เก็บในเครื่อง)
+  const set = new Set(LS.get('luckyDays', [])); let n = 0; const d = ictNow();
+  if (!set.has(ictISO())) d.setDate(d.getDate() - 1);
+  for (; ; d.setDate(d.getDate() - 1)) { const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); if (set.has(k)) n++; else break }
+  return n;
+}
+function markLuckyVisit() { const k = ictISO(), l = LS.get('luckyDays', []); if (!l.includes(k)) { l.push(k); LS.set('luckyDays', l.slice(-90)) } }
+/* ชุดเริ่มต้นนี้เป็นรายการตัวอย่างที่ผู้พัฒนารวบรวมแบบหลวม ๆ ตามคำเล่าขานทั่วไป — ไม่ใช่ตำราอ้างอิง แต่ละสำนักให้เลขไม่ตรงกัน ผู้ใช้เพิ่ม/แก้ของตัวเองได้ */
+const DREAMS = [
+  { k: ['งู', 'งูใหญ่'], m: 'มักเล่ากันว่าเป็นสัญญาณของการเปลี่ยนแปลง หรือให้ระวังคนใกล้ตัว', n: ['56', '65'] },
+  { k: ['ช้าง'], m: 'ช้างเป็นสัตว์มงคล เล่ากันว่าหมายถึงความมั่นคงและผู้ใหญ่คอยอุปถัมภ์', n: ['08', '80'] },
+  { k: ['ปลา'], m: 'เชื่อกันว่าเกี่ยวกับความอุดมสมบูรณ์ การมีโอกาสใหม่ ๆ', n: ['23', '32'] },
+  { k: ['น้ำท่วม', 'น้ำ'], m: 'น้ำมักหมายถึงอารมณ์/ความรู้สึก น้ำใสว่ากันว่าดี น้ำขุ่นให้ใจเย็นลง', n: ['69', '96'] },
+  { k: ['ไฟ', 'ไฟไหม้'], m: 'มักตีความถึงความร้อนใจ หรือพลังที่อยากเริ่มสิ่งใหม่', n: ['07', '70'] },
+  { k: ['พระ', 'ภิกษุ'], m: 'เชื่อกันว่าเป็นนิมิตดี สื่อถึงความสงบและการได้รับความช่วยเหลือ', n: ['09', '90'] },
+  { k: ['ทอง', 'เงิน', 'เงินทอง'], m: 'เล่ากันว่าเป็นความหวังเรื่องความมั่นคง ลองวางแผนการเงินให้ชัดเจนขึ้น', n: ['19', '91'] },
+  { k: ['ศพ', 'คนตาย', 'งานศพ'], m: 'ไม่ได้แปลว่าลางร้ายเสมอไป หลายความเชื่อว่าหมายถึงการจบเรื่องเก่าและเริ่มใหม่', n: ['04', '40'] },
+  { k: ['ฟันหัก', 'ฟัน'], m: 'มักถูกตีความถึงความกังวลเรื่องคนใกล้ชิดหรือสุขภาพ — ใส่ใจตัวเองและครอบครัวไว้นะ', n: ['14', '41'] },
+  { k: ['เด็ก', 'ทารก'], m: 'เชื่อกันว่าเป็นเรื่องของจุดเริ่มต้นใหม่ ความบริสุทธิ์ และข่าวดี', n: ['01', '10'] },
+  { k: ['แม่', 'มารดา'], m: 'มักหมายถึงความห่วงใยและการได้รับการปกป้อง ลองโทรหาท่านสักครั้ง', n: ['12', '21'] },
+  { k: ['พ่อ', 'บิดา'], m: 'มักหมายถึงที่พึ่งทางใจและคำแนะนำที่ดี', n: ['13', '31'] },
+  { k: ['ตก', 'ตกจากที่สูง', 'ตกน้ำ'], m: 'ความรู้สึกตกมักสะท้อนความกังวล/เสียการควบคุม พักผ่อนให้พอก็ช่วยได้', n: ['24', '42'] },
+  { k: ['บิน', 'เหาะ'], m: 'มักตีความถึงอิสระและความทะเยอทะยาน', n: ['58', '85'] },
+  { k: ['วิ่งหนี', 'ถูกไล่'], m: 'มักสะท้อนความกดดันที่เราพยายามหลีกเลี่ยง ลองจัดการเรื่องเล็กที่ค้างอยู่', n: ['27', '72'] },
+  { k: ['สุนัข', 'หมา'], m: 'เล่ากันว่าเกี่ยวกับมิตรภาพและความซื่อสัตย์', n: ['35', '53'] },
+  { k: ['แมว'], m: 'มักตีความถึงความอิสระ สัญชาตญาณ หรือให้ระวังความไม่จริงใจ', n: ['34', '43'] },
+  { k: ['ม้า'], m: 'เล่ากันว่าเป็นสัญลักษณ์ของความก้าวหน้าและแรงขับเคลื่อน', n: ['16', '61'] },
+  { k: ['วัว', 'ควาย'], m: 'มักหมายถึงความขยัน อดทน และผลลัพธ์จากการสะสม', n: ['26', '62'] },
+  { k: ['เสือ'], m: 'เล่ากันว่าเป็นพลังอำนาจ หรือเรื่องท้าทายที่ต้องกล้ารับมือ', n: ['28', '82'] },
+  { k: ['จระเข้'], m: 'มักตีความถึงความเสี่ยงที่ซ่อนอยู่ ให้รอบคอบกับข้อตกลงต่าง ๆ', n: ['57', '75'] },
+  { k: ['นก'], m: 'มักหมายถึงข่าวสารและอิสรภาพ', n: ['38', '83'] },
+  { k: ['ดอกไม้', 'ดอกบัว'], m: 'เล่ากันว่าเป็นเรื่องดี ความรัก ความงดงาม และความสุข', n: ['17', '71'] },
+  { k: ['ต้นไม้', 'ป่า'], m: 'มักตีความถึงการเติบโตและรากฐานที่มั่นคง', n: ['29', '92'] },
+  { k: ['ฝน'], m: 'เล่ากันว่าฝนล้างสิ่งเก่า ชุ่มชื้นใจ และเริ่มต้นใหม่', n: ['46', '64'] },
+  { k: ['รถ', 'รถชน'], m: 'มักสะท้อนทิศทางชีวิตและความรีบร้อน ขับขี่จริงให้ระวังไว้ด้วยนะ', n: ['36', '63'] },
+  { k: ['บ้าน', 'บ้านใหม่'], m: 'มักหมายถึงความมั่นคงและพื้นที่ปลอดภัยทางใจ', n: ['18', '81'] },
+  { k: ['แต่งงาน', 'เจ้าสาว', 'เจ้าบ่าว'], m: 'เล่ากันว่าเป็นการเริ่มต้นความสัมพันธ์หรือความร่วมมือใหม่', n: ['25', '52'] },
+  { k: ['ท้อง', 'ตั้งครรภ์'], m: 'มักตีความถึงโครงการ/ความหวังใหม่ที่กำลังเติบโต', n: ['15', '51'] },
+  { k: ['เจ้านาย', 'ผู้ใหญ่'], m: 'มักสะท้อนความรับผิดชอบและแรงกดดันในการงาน', n: ['30', '03'] },
+  { k: ['ผี', 'วิญญาณ'], m: 'มักตีความถึงสิ่งที่ค้างคาในใจ ลองจัดการหรือพูดคุยกับคนที่เกี่ยวข้อง', n: ['47', '74'] },
+  { k: ['ทะเล', 'คลื่น'], m: 'มักหมายถึงโอกาสกว้างและอารมณ์ที่ผันผวน', n: ['67', '76'] },
+  { k: ['ภูเขา', 'ขึ้นเขา'], m: 'เล่ากันว่าเป็นเป้าหมายที่ต้องค่อย ๆ ไต่ไป', n: ['49', '94'] },
+  { k: ['ลอตเตอรี่', 'หวย'], m: 'ฝันถึงหวยมักสะท้อนความหวังเรื่องโชคดี — อย่าลืมว่าเลขที่ออกเป็นเรื่องสุ่มล้วน ๆ', n: ['00', '99'] },
+];
+function dreamMatch(q) {
+  q = (q || '').trim(); if (!q) return [];
+  const all = [...LS.get('dreams', []), ...DREAMS];
+  return all.filter(e => e.k.some(k => k && q.includes(k)));
+}
+
+/* ---------- เตือนใกล้เวลาออกผล ----------
+   ทำงานเฉพาะตอนเปิดแอป/แท็บค้างไว้ (เว็บแอปไม่มีโปรเซสเบื้องหลัง) — เวลาเป็นเวลาไทย (ICT) ค่าเริ่มต้นเป็นค่าประมาณ ตรวจและแก้ได้ในตั้งค่า */
+const DAYN = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+const SCHED_DEF = {
+  thai: { time: '14:30', dates: '1,16' },
+  gsb:  { time: '10:00', dates: '16' },
+  lao:  { time: '20:30', days: [1, 3, 5] },
+  hanoi: { time: '18:15', days: [0, 1, 2, 3, 4, 5, 6] },
+  my:   { time: '18:00', days: [3, 6, 0] },
+};
+const sched = lot => Object.assign({ on: false }, SCHED_DEF[lot], (S.set.sched || {})[lot] || {});
+function ictNow() { const d = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000); return d }  // นาฬิกาไทย ไม่ขึ้นกับโซนของเครื่อง
+function slotTimes(lot, now) {
+  const c = sched(lot), [hh, mm] = (c.time || '00:00').split(':').map(Number);
+  const out = [];
+  for (const off of [0, -1]) {      // วันนี้ + เมื่อวาน (กรณีข้ามเที่ยงคืน/แท็บเพิ่งตื่น)
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off);
+    const hit = c.dates != null ? String(c.dates).split(/[ ,]+/).map(Number).includes(d.getDate()) : (c.days || []).includes(d.getDay());
+    if (hit) out.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm));
+  }
+  return out;
+}
+function remindTick() {
+  if (!S.set.remind) return;
+  const now = ictNow(), lead = (S.set.lead || 15) * 60000;
+  let fired = LS.get('remFired', {}); const keep = {}; let dirty = false;
+  for (const k in fired) if (Date.now() - fired[k] < 3 * 864e5) keep[k] = fired[k];
+  fired = keep;
+  for (const lot of Object.keys(LOTTO)) {
+    if (!sched(lot).on) continue;
+    for (const t of slotTimes(lot, now)) {
+      const diff = t - now, key = lot + '@' + t.getTime();
+      const pre = diff > 0 && diff <= lead, at = diff <= 0 && diff > -10 * 60000;
+      const stage = pre ? 'pre' : at ? 'at' : null;
+      if (!stage || fired[key + stage]) continue;
+      fired[key + stage] = Date.now(); dirty = true;
+      const mins = Math.max(1, Math.round(diff / 60000)), nm = LOTTO[lot].name;
+      const title = stage === 'pre' ? `⏰ ใกล้ถึงเวลาออกผล ${nm}` : `🔔 ถึงเวลาออกผล ${nm} แล้ว`;
+      const body = stage === 'pre' ? `อีกประมาณ ${mins} นาที — เตรียมสลากของคุณไว้ได้เลย` : 'เปิดแอปเพื่อดูผลและตรวจสลาก (ผลอาจขึ้นช้ากว่าประกาศเล็กน้อย)';
+      if (S.set.notif) addNotif(title, body);
+      toast(title);
+      try { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body }) } catch (e) { }
+    }
+  }
+  if (dirty || Object.keys(keep).length !== Object.keys(LS.get('remFired', {})).length) LS.set('remFired', fired);
+}
+function luckyTick() {
+  if (!S.set.luckyRemind) return;
+  const now = ictNow(), [hh, mm] = (S.set.luckyTime || '07:00').split(':').map(Number);
+  const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm), diff = now - t, key = 'lucky@' + ictISO();
+  const fired = LS.get('remFired', {});
+  if (diff < 0 || diff > 30 * 60000 || fired[key]) return;
+  fired[key] = Date.now(); LS.set('remFired', fired);
+  const L = dailyLucky(ictISO()), title = '🔮 เลขมงคลวันนี้มาแล้ว', body = `สีมงคลวัน${DAYFULL[L.wd]}: ${L.color[0]} · ${L.fortune}`;
+  if (S.set.notif) addNotif(title, body); toast(title);
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body }) } catch (e) { }
+}
+setInterval(() => { remindTick(); luckyTick() }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { remindTick(); luckyTick() } });
+
+/* ---------- Modal / Ad ---------- */
+function openModal(html, dismiss = true) {
+  $('#modal').innerHTML = `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3" ${dismiss ? 'onclick="if(event.target===this)closeModal()"' : ''}><div class="w-full max-w-lg max-h-[90vh] overflow-auto rounded-2xl bg-white dark:bg-slate-800 p-4 shadow-xl">${html}</div></div>`;
+}
+const closeModal = () => { $('#modal').innerHTML = '' };
+/* AdMob (เฉพาะเมื่อห่อเป็นแอปมือถือด้วย Capacitor + @capacitor-community/admob — บนเว็บธรรมดาใช้ไม่ได้)
+   adUnitId ด้านล่างเป็น "รหัสทดสอบ" ของ Google — ห้ามใช้รหัสจริงจนกว่าจะอ่าน ADS.md และตรวจนโยบายแล้ว */
+const ADMOB = { interstitial: 'ca-app-pub-3940256099942544/1033173712' /* test ID */, useTestAds: true };
+async function nativeInterstitial() {
+  const P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+  if (!P) return null;
+  try {
+    await P.initialize({ initializeForTesting: ADMOB.useTestAds });
+    await P.prepareInterstitial({ adId: ADMOB.interstitial, isTesting: ADMOB.useTestAds });
+    await P.showInterstitial();
+    return true;
+  } catch (e) { return null; }   // โฆษณาโหลดไม่ได้ → ใช้กล่องโฆษณาเว็บแทน (ไม่ขวางผู้ใช้)
+}
+async function adGate(place) {
+  if (!AD_CONFIG.enabled) return true;
+  if (await nativeInterstitial()) return true;
+  return adGateWeb(place);
+}
+function adGateWeb(place) {
+  return new Promise(res => {
+    let left = AD_CONFIG.seconds, t; const root = $('#adroot');
+    root.innerHTML = `<div class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"><div class="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-4 text-center">
+      <div class="text-xs text-slate-500 mb-2">โฆษณา · ช่วยให้ LottoSnap ใช้ฟรี</div>
+      <div id="adbox" class="min-h-[250px] rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden"></div>
+      <div class="flex gap-2 mt-3"><button id="adx" class="${BS} flex-1">ยกเลิก</button><button id="adgo" disabled class="${BP} flex-1">รอ ${left} วิ</button></div></div></div>`;
+    try { AD_CONFIG.mount($('#adbox'), place) } catch (e) { }
+    const done = v => { clearInterval(t); root.innerHTML = ''; res(v) };
+    t = setInterval(() => { left--; const b = $('#adgo'); if (!b) return clearInterval(t); if (left > 0) b.textContent = 'รอ ' + left + ' วิ'; else { clearInterval(t); b.disabled = false; b.textContent = 'ไปต่อ ▶' } }, 1000);
+    $('#adx').onclick = () => done(false); $('#adgo').onclick = () => done(true);
+  });
+}
+
+/* ---------- OCR / QR pipeline ---------- */
+let worker = null, ocrProg = null;
+async function getWorker() {
+  if (worker) return worker;
+  if (typeof Tesseract === 'undefined') throw new Error('โหลด Tesseract.js ไม่สำเร็จ (ตรวจอินเทอร์เน็ต)');
+  worker = await Tesseract.createWorker('eng', 1, { logger: m => { if (m.status === 'recognizing text' && ocrProg) ocrProg(m.progress) } });
+  await worker.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT, preserve_interword_spaces: '1' });
+  return worker;
+}
+function toCanvas(img) { const c = document.createElement('canvas'); c.width = img.naturalWidth || img.videoWidth || img.width; c.height = img.naturalHeight || img.videoHeight || img.height; c.getContext('2d').drawImage(img, 0, 0); return c }
+function prep(src) {
+  let w = src.width, h = src.height; const sc = w < 1000 ? 1000 / w : (w > 1800 ? 1800 / w : 1);
+  w = Math.round(w * sc); h = Math.round(h * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(src, 0, 0, w, h);
+  if (!S.set.pre) return c;
+  const d = x.getImageData(0, 0, w, h), p = d.data, g = new Uint8Array(w * h); let mn = 255, mx = 0;
+  for (let i = 0, j = 0; i < p.length; i += 4, j++) { const v = (p[i] * .299 + p[i + 1] * .587 + p[i + 2] * .114) | 0; g[j] = v; if (v < mn) mn = v; if (v > mx) mx = v }
+  const r = Math.max(1, mx - mn);
+  for (let i = 0, j = 0; i < p.length; i += 4, j++) { const v = ((g[j] - mn) * 255 / r) | 0; p[i] = p[i + 1] = p[i + 2] = v }
+  x.putImageData(d, 0, 0); return c;
+}
+function readQR(cv, maxSide = 1400) {
+  if (typeof jsQR === 'undefined') return null;
+  const sc = Math.min(1, maxSide / Math.max(cv.width, cv.height)), w = Math.round(cv.width * sc), h = Math.round(cv.height * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(cv, 0, 0, w, h);
+  return jsQR(x.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'attemptBoth' });
+}
+/* ดึงเฉพาะตัวเลข เรียงตามลำดับที่อ่านได้ — ไม่สลับ ไม่เรียงใหม่ */
+function extractNums(text) {
+  const out = [], lens = LOTTO[S.lottery].len;
+  String(text).split(/\n+/).forEach(line => {
+    const runs = line.match(/\d+/g) || [];
+    runs.forEach(r => { if (r.length >= 2) out.push(r) });
+    const j = runs.join('');
+    if (runs.length > 1 && lens.includes(j.length)) out.push(j);
+  });
+  return out;
+}
+function addCands(nums, src, label) {
+  const lens = LOTTO[S.lottery].len;
+  nums.forEach(n => { if (!S.cands.some(c => c.v === n)) S.cands.push({ id: ++S.uid, v: n, src, label, checked: lens.includes(n.length) }) });
+}
+function setProg(msg, p) {
+  const el = $('#prog'); if (!el) return;
+  el.innerHTML = msg ? `<div class="text-sm mb-1">${esc(msg)}</div><div class="h-2 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-2 bg-teal-500" style="width:${Math.round((p || 0) * 100)}%"></div></div>` : '';
+}
+async function runPipeline(cv, label) {
+  setProg(label + ': กำลังอ่าน QR…', .05);
+  try {
+    const qr = readQR(cv);
+    if (qr && qr.data) { S.notes.push('QR (' + label + '): ' + qr.data); addCands(extractNums(qr.data), 'QR', label); toast('พบ QR code') }
+  } catch (e) { }
+  try {
+    setProg(label + ': กำลังอ่านตัวเลข (OCR)…', .1);
+    const w = await getWorker(); ocrProg = p => setProg(label + ': OCR ' + Math.round(p * 100) + '%', .1 + p * .9);
+    const r = await w.recognize(prep(cv)); ocrProg = null;
+    const nums = extractNums(r.data.text);
+    S.notes.push('OCR (' + label + '): ' + r.data.text.replace(/\s+/g, ' ').trim());
+    addCands(nums, 'OCR', label);
+    if (!nums.length) toast('ไม่พบตัวเลข — ลองถ่ายให้ชัด ตรง และแสงพอ');
+  } catch (e) { ocrProg = null; toast('OCR ผิดพลาด: ' + e.message) }
+  setProg(''); renderCands();
+}
+
+/* ---------- รายการเลขที่อ่านได้ (ต้องตรวจ/แก้ก่อนเสมอ) ---------- */
+function candsHTML() {
+  const room = 10 - S.tickets.filter(t => t.v).length;
+  const rows = S.cands.map(c => `<div class="flex items-center gap-2">
+    <input type="checkbox" ${c.checked ? 'checked' : ''} onchange="A.cToggle(${c.id},this.checked)" class="w-5 h-5 accent-teal-600">
+    <input class="${INP} font-mono tracking-widest text-lg" inputmode="numeric" value="${esc(c.v)}" oninput="A.cEdit(${c.id},this)">
+    <span class="chip bg-slate-100 dark:bg-slate-700 text-[11px]">${esc(c.src)}</span>
+    <button class="text-rose-500 px-1" onclick="A.cDel(${c.id})" aria-label="ลบ">✕</button></div>`).join('');
+  return `<div class="${CARD} space-y-3">
+    <div class="font-bold">เลขที่อ่านได้ <span class="text-xs font-normal text-slate-500">(เลือกได้อีก ${Math.max(0, room)} ใบ)</span></div>
+    <div class="text-xs rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 p-2">⚠️ ความแม่นยำของ OCR ขึ้นกับคุณภาพภาพ กรุณาเทียบกับสลากจริงและแก้ไขตัวเลขให้ถูกต้องก่อนกดตรวจผล</div>
+    ${rows || '<div class="text-sm text-slate-500">ยังไม่มีเลข — สแกนหรือเพิ่มเลขเอง</div>'}
+    <div class="flex flex-wrap gap-2"><button class="${BP}" onclick="A.cAdd()">➕ เพิ่มที่เลือกลงรายการตรวจ</button><button class="${BS}" onclick="A.cNew()">+ เพิ่มเลขเอง</button>${S.cands.length ? `<button class="${BS}" onclick="A.cClear()">ล้าง</button>` : ''}</div>
+    ${S.tickets.some(t => t.v) ? `<button class="${BS} w-full" onclick="go('results')">ไปหน้าตรวจผล (${S.tickets.filter(t => t.v).length} ใบ) ▶</button>` : ''}
+    ${S.notes.length ? `<details class="text-xs text-slate-500"><summary>ข้อความดิบที่อ่านได้</summary><div class="mt-1 space-y-1 break-all">${S.notes.map(n => `<div>${esc(n)}</div>`).join('')}</div></details>` : ''}</div>`;
+}
+const renderCands = () => { const e = $('#cands'); if (e) e.innerHTML = candsHTML() };
+
+/* ---------- Camera ---------- */
+const Cam = {
+  stream: null, facing: 'environment', timer: null, last: '',
+  async start() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('เบราว์เซอร์นี้ไม่รองรับกล้อง (ต้องใช้ HTTPS)');
+    if (!await adGate('camera')) return;
+    try {
+      this.stop(true);
+      this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: this.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+      const v = $('#vid'); if (!v) return this.stop();
+      v.srcObject = this.stream; await v.play();
+      $('#camOn').classList.remove('hidden'); $('#camOff').classList.add('hidden');
+      this.timer = setInterval(() => this.live(), 400);
+    } catch (e) { toast('เปิดกล้องไม่ได้: ' + (e.message || e.name)) }
+  },
+  stop(silent) {
+    clearInterval(this.timer); this.timer = null;
+    if (this.stream) this.stream.getTracks().forEach(t => t.stop()); this.stream = null;
+    const v = $('#vid'); if (v) v.srcObject = null;
+    if (!silent) { $('#camOn')?.classList.add('hidden'); $('#camOff')?.classList.remove('hidden') }
+  },
+  flip() { this.facing = this.facing === 'environment' ? 'user' : 'environment'; this.stop(true); this.start() },
+  live() {
+    const v = $('#vid'); if (!v || !v.videoWidth || this.busy) return;
+    try {
+      const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0);
+      const qr = readQR(c, 640);
+      if (qr && qr.data && qr.data !== this.last) { this.last = qr.data; S.notes.push('QR (สด): ' + qr.data); addCands(extractNums(qr.data), 'QR', 'สด'); renderCands(); toast('พบ QR code'); navigator.vibrate && navigator.vibrate(60) }
+    } catch (e) { }
+  },
+  async shot() {
+    const v = $('#vid'); if (!v || !v.videoWidth) return toast('กล้องยังไม่พร้อม');
+    this.busy = true; await runPipeline(toCanvas(v), 'ภาพจากกล้อง'); this.busy = false;
+  }
+};
+
+/* ---------- Voice ---------- */
+const THW = { 'ศูนย์': 0, 'หนึ่ง': 1, 'เอ็ด': 1, 'สอง': 2, 'สาม': 3, 'สี่': 4, 'ห้า': 5, 'หก': 6, 'เจ็ด': 7, 'แปด': 8, 'เก้า': 9, 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9 };
+function speechDigits(s) {
+  s = String(s).replace(/[๐-๙]/g, c => '๐๑๒๓๔๕๖๗๘๙'.indexOf(c));
+  const re = new RegExp(Object.keys(THW).sort((a, b) => b.length - a.length).join('|'), 'gi');
+  s = s.replace(re, m => ' ' + THW[m.toLowerCase()] + ' ');
+  return (s.match(/\d/g) || []).join('');
+}
+const Voice = {
+  rec: null, digits: '',
+  async open() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return toast('เบราว์เซอร์นี้ไม่รองรับการรับเสียง (ลอง Chrome/Edge/Safari)');
+    if (!await adGate('voice')) return;
+    openModal(`<div class="font-bold text-lg mb-2">🎤 พูดตัวเลข</div>
+      <div class="text-xs text-slate-500 mb-2">พูดทีละหลัก เช่น "หนึ่ง สอง สาม สี่ ห้า หก" ระบบจะแปลงเป็นตัวเลข แล้วให้คุณตรวจ/แก้ก่อนเพิ่ม</div>
+      <div id="vtxt" class="min-h-[2.5rem] rounded-xl bg-slate-100 dark:bg-slate-700 p-2 text-sm mb-2">กำลังฟัง…</div>
+      <input id="vnum" class="${INP} font-mono tracking-widest text-xl" inputmode="numeric" placeholder="เลขที่ได้ (แยกหลายใบด้วยเว้นวรรค)">
+      <div class="flex gap-2 mt-3"><button id="vtog" class="${BS} flex-1" onclick="Voice.toggle()">⏹ หยุด</button><button class="${BP} flex-1" onclick="Voice.add()">➕ เพิ่ม</button><button class="${BS}" onclick="Voice.close()">ปิด</button></div>`);
+    this.rec = new SR(); this.rec.lang = 'th-TH'; this.rec.continuous = true; this.rec.interimResults = true; this.on = true;
+    this.rec.onresult = e => {
+      let txt = ''; for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript + ' ';
+      $('#vtxt').textContent = txt; let d = speechDigits(txt); const L = LOTTO[S.lottery].len[0];
+      if (d.length > L && d.length % L === 0) d = d.match(new RegExp('.{' + L + '}', 'g')).join(' ');
+      $('#vnum').value = d;
+    };
+    this.rec.onerror = e => { toast('เสียงผิดพลาด: ' + e.error); this.on = false; this.btn() };
+    this.rec.onend = () => { this.on = false; this.btn() };
+    try { this.rec.start() } catch (e) { }
+  },
+  btn() { const b = $('#vtog'); if (b) b.textContent = this.on ? '⏹ หยุด' : '🎤 พูดอีกครั้ง' },
+  toggle() { if (this.on) { this.rec.stop() } else { try { this.rec.start(); this.on = true; this.btn() } catch (e) { } } },
+  add() {
+    const list = ($('#vnum').value.match(/\d+/g) || []);
+    if (!list.length) return toast('ยังไม่มีตัวเลข');
+    const n = addTickets(list, 'voice'); this.close(); toast('เพิ่ม ' + n + ' ใบ — โปรดตรวจเลขก่อนกดตรวจผล'); render();
+  },
+  close() { try { this.rec && this.rec.stop() } catch (e) { } closeModal() }
+};
+
+/* ---------- Tickets ---------- */
+function addTickets(list, src) {
+  S.tickets = S.tickets.filter(t => t.v);
+  let n = 0;
+  for (const v of list) {
+    if (S.tickets.length >= 10) { toast('ตรวจได้สูงสุด 10 ใบ'); break }
+    S.tickets.push({ v: String(v).replace(/\D/g, '').slice(0, 12), src, ok: src === 'manual' }); n++;
+  }
+  if (!S.tickets.length) S.tickets.push({ v: '', src: 'manual', ok: true });
+  S.lastCheck = null; return n;
+}
+
+/* ---------- Views ---------- */
+const disc = () => `<p class="text-[11px] text-center text-slate-500 mt-6 leading-relaxed">LottoSnap เป็นแอปฟรี ใช้ตรวจผลรางวัลเท่านั้น ไม่มีการซื้อขายสลากหรือการพนันใด ๆ · ผลที่ถูกต้องให้ยึดประกาศอย่างเป็นทางการ · <a class="underline" href="#about">เกี่ยวกับ</a></p>`;
+const avatarHTML = () => S.profile.img ? `<img src="${S.profile.img}" class="w-full h-full object-cover" alt="">` : esc(S.profile.avatar);
+const secTitle = t => `<h2 class="font-bold text-lg mb-2">${t}</h2>`;
+
+function groupChips(r, hitSet = new Set()) {
+  return r.groups.map(g => `<div class="${CARD} !p-3"><div class="flex justify-between text-sm"><span class="font-semibold">${esc(g.name)}</span><span class="text-xs text-slate-500">${esc(MATCH_LABEL[g.match] || '')}${g.reward ? ' · ' + fmt(g.reward) : ''}</span></div>
+    <div class="flex flex-wrap gap-1.5 mt-2">${g.numbers.length ? g.numbers.map(n => `<span class="font-mono px-2 py-0.5 rounded-lg ${hitSet.has(g.id + '|' + n) ? 'bg-emerald-500 text-white font-bold' : 'bg-slate-100 dark:bg-slate-700'}">${esc(n)}</span>`).join('') : '<span class="text-xs text-slate-400">ยังไม่มีข้อมูล</span>'}</div></div>`).join('');
+}
+function resultNotice(r) {
+  if (r && r.source === 'demo') return `<div class="rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 p-3 text-sm space-y-2"><div><b>🧪 โหมดข้อมูลตัวอย่าง</b> — ตัวเลขชุดนี้ไม่ใช่ผลรางวัลจริง และจะไม่บันทึกลงประวัติ</div><div class="flex flex-wrap gap-2"><button class="${BS}" onclick="A.demoTicket()">ใส่เลขตัวอย่าง ${DEMO_HINT[S.lottery]}</button><button class="${BS}" onclick="A.exitDemo()">ออกจากโหมดตัวอย่าง</button></div></div>`;
+  if (r && r.source === 'dataset') return `<div class="text-xs text-slate-500 px-1">ข้อมูลจากชุดข้อมูลชุมชน (CC BY 4.0) อาจล่าช้ากว่าประกาศจริง — โปรดยืนยันกับ <a class="underline" target="_blank" rel="noopener" href="https://www.glo.or.th">glo.or.th</a></div>`;
+  if (r && r.source === 'web' && WEB[r.lottery]) return `<div class="text-xs text-slate-500 px-1">ดึงอัตโนมัติจาก ${WEB[r.lottery].host} อาจคลาดเคลื่อนหรือล่าช้า — โปรดยืนยันกับประกาศของผู้ออกสลาก</div>`;
+  if (r) return '';
+  const th = S.lottery === 'thai';
+  return `<div class="${CARD} space-y-3 text-center"><div class="text-3xl">${th ? '📡' : '📝'}</div><div class="font-semibold">ยังไม่มีผลรางวัล</div>${th && S.drawErr ? `<div class="text-xs text-rose-600">${esc(S.drawErr)}</div>` : ''}<div class="text-xs text-slate-500">${th ? 'ลองโหลดใหม่ หรือทดสอบการตรวจด้วยข้อมูลตัวอย่าง' : webStatus(S.lottery)}</div><div class="flex flex-wrap gap-2 justify-center">${th ? `<button class="${BP}" onclick="loadHome()">ลองโหลดใหม่</button>` : (WEB[S.lottery] ? `<button class="${BP}" onclick="loadWeb('${S.lottery}')" ${S.webBusy[S.lottery] ? 'disabled' : ''}>🌐 ดึงผลจากเว็บ</button>` : '')}<button class="${BS}" onclick="A.useDemo()">🧪 ใช้ข้อมูลตัวอย่าง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button>${th ? '' : `<button class="${BS}" onclick="go('settings')">⚙️ เชื่อมบอทดึงผลอัตโนมัติ</button>`}</div></div>`;
+}
+function heroCard(r) {
+  const th = r.lottery === 'thai' && grp(r, 'prizeFirst').numbers.length;
+  let inner;
+  if (th) {
+    inner = `<div class="text-xs opacity-80">รางวัลที่ 1</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'prizeFirst').numbers[0])}</div>
+      <div class="grid grid-cols-3 gap-2 mt-3">${[['runningNumberFrontThree', 'เลขหน้า 3 ตัว'], ['runningNumberBackThree', 'เลขท้าย 3 ตัว'], ['runningNumberBackTwo', 'เลขท้าย 2 ตัว']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>`;
+  } else {
+    inner = `<div class="grid grid-cols-2 gap-2">${r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => `<div class="bg-white/15 rounded-xl p-2"><div class="text-[11px] opacity-80">${esc(g.name)}</div><div class="font-mono font-bold break-all">${esc(g.numbers.slice(0, 4).join(' '))}</div></div>`).join('') || '<div class="text-sm opacity-80 col-span-2">ยังไม่ได้กรอกเลขรางวัล</div>'}</div>`;
+  }
+  return `<div class="rounded-2xl bg-gradient-to-br from-teal-600 to-emerald-700 text-white p-4 shadow">
+    <div class="flex justify-between items-start"><div><div class="text-xs opacity-80">${LOTTO[r.lottery].icon} ${LOTTO[r.lottery].name}</div><div class="font-bold">งวด ${esc(r.date || '—')}</div></div><span class="chip bg-white/20 text-[11px]">${({ api: 'ข้อมูลจาก API', bot: 'จากบอท', web: 'ดึงจากเว็บ', dataset: 'ชุดข้อมูลชุมชน', demo: 'ตัวอย่าง' })[r.source] || 'กรอกเอง'}</span></div>${inner}</div>`;
+}
+const VIEWS = {
+  home() {
+    const r = curResult(), th = S.lottery === 'thai'; let hero;
+    if (th && S.drawState === 'loading' && !r) hero = `<div class="${CARD} animate-pulse h-44"></div>`;
+    else if (r) hero = heroCard(r);
+    else hero = `<div class="${CARD} text-center space-y-3"><div class="text-3xl">${th ? '📡' : '📝'}</div><div class="font-semibold">${th ? 'โหลดผลรางวัลไม่สำเร็จ' : 'ยังไม่มีผลรางวัลของ ' + LOTTO[S.lottery].name}</div><div class="text-xs text-slate-500">${th ? esc(S.drawErr || '') + ' — ลองใหม่ หรือกรอกผลเอง' : webStatus(S.lottery)}</div><div class="flex gap-2 justify-center">${th ? `<button class="${BP}" onclick="loadHome()">ลองใหม่</button>` : (WEB[S.lottery] ? `<button class="${BP}" onclick="loadWeb('${S.lottery}')" ${S.webBusy[S.lottery] ? 'disabled' : ''}>🌐 ดึงผลจากเว็บ</button>` : '')}<button class="${BS}" onclick="A.useDemo()">🧪 ใช้ข้อมูลตัวอย่าง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div></div>`;
+    const recent = S.checks.slice(0, 5).map(checkRow).join('') || '<div class="text-sm text-slate-500">ยังไม่มีประวัติการตรวจ</div>';
+    return `<div class="space-y-4">${hero}
+      <div class="flex flex-wrap gap-2">${r ? `<button class="${BP}" onclick="go('results')">ดูผลทั้งหมด</button>` : ''}${r && r.source !== 'demo' ? `<button class="${BS}" onclick="A.shareResult()">📤 แชร์ผล</button>` : ''}<button class="${BS}" onclick="A.picker()">📅 ตรวจงวดย้อนหลัง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div>
+      <div><div class="font-bold mb-2">ทางลัด</div><div class="grid grid-cols-3 gap-2">
+        ${[['camera', '📷', 'ถ่ายภาพสลาก'], ['gallery', '🖼️', 'อัปโหลดรูป'], ['results', '⌨️', 'กรอก/พูดเลข']].map(([v, i, n]) => `<button onclick="go('${v}')" class="${CARD} !p-3 text-center active:scale-95 transition"><div class="text-3xl">${i}</div><div class="text-xs font-semibold mt-1">${n}</div></button>`).join('')}</div></div>
+      <button onclick="go('lucky')" class="${CARD} w-full flex items-center gap-3 text-left active:scale-[.99] transition"><div class="text-3xl">🔮</div><div class="flex-1"><div class="font-semibold">สายมู — เลขมงคลวันนี้ & ทำนายฝัน</div><div class="text-xs text-slate-500">เปิดดูได้ทุกวัน · เพื่อความบันเทิง</div></div><div class="text-slate-400">›</div></button>
+      <div><div class="flex justify-between items-center mb-2"><div class="font-bold">ประวัติล่าสุด</div><button class="text-xs text-teal-600" onclick="go('history')">ดูทั้งหมด</button></div><div class="space-y-2">${recent}</div></div>${inviteCard()}</div>${disc()}`;
+  },
+  camera() {
+    return `<div class="space-y-3">${secTitle('📷 ถ่ายภาพสลาก')}
+      <div class="relative rounded-2xl overflow-hidden bg-black aspect-[4/3]">
+        <video id="vid" playsinline muted class="w-full h-full object-cover"></video>
+        <div id="camOff" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white p-4 text-center"><div class="text-5xl">📷</div><div class="text-sm opacity-80">กดเปิดกล้อง (มีโฆษณาคั่นก่อนใช้งาน)</div><button class="${BP}" onclick="Cam.start()">เปิดกล้อง</button></div>
+        <div id="camOn" class="hidden absolute inset-0 pointer-events-none"><div class="absolute inset-x-6 top-1/3 h-1/3 border-2 border-emerald-400 rounded-xl"></div><div class="absolute bottom-2 inset-x-0 text-center text-xs text-white/90">จัดเลขบนสลากให้อยู่ในกรอบ · QR จะถูกอ่านอัตโนมัติ</div></div></div>
+      <div id="camOnBtns" class="flex gap-2"><button class="${BP} flex-1" onclick="Cam.shot()">📸 ถ่าย + อ่านเลข</button><button class="${BS}" onclick="Cam.flip()">🔄</button><button class="${BS}" onclick="Cam.stop()">ปิดกล้อง</button></div>
+      <div id="prog"></div><div id="cands">${candsHTML()}</div></div>${disc()}`;
+  },
+  gallery() {
+    return `<div class="space-y-3">${secTitle('🖼️ อัปโหลดรูปสลาก')}
+      <label class="${CARD} block text-center border-dashed cursor-pointer" ondragover="event.preventDefault()" ondrop="event.preventDefault();A.files(event.dataTransfer.files)">
+        <div class="text-4xl">⬆️</div><div class="font-semibold">เลือกรูป (ได้หลายไฟล์) หรือลากมาวาง</div><div class="text-xs text-slate-500">ใช้ OCR + QR เหมือนหน้ากล้อง</div>
+        <input type="file" accept="image/*" multiple class="hidden" onchange="A.files(this.files);this.value=''"></label>
+      <div id="thumbs" class="flex gap-2 overflow-x-auto sb-hide"></div><div id="prog"></div><div id="cands">${candsHTML()}</div></div>${disc()}`;
+  },
+  results() {
+    const L = LOTTO[S.lottery], r = curResult();
+    const rows = S.tickets.map((t, i) => `<div class="flex items-center gap-2"><span class="w-5 text-xs text-slate-500">${i + 1}</span>
+      <input class="${INP} font-mono tracking-widest text-lg" inputmode="numeric" maxlength="${L.max}" value="${esc(t.v)}" placeholder="${'0'.repeat(L.len[0])}" oninput="A.tEdit(${i},this)">
+      ${t.src !== 'manual' && !t.ok ? '<span class="chip bg-amber-100 text-amber-800 text-[11px]">ตรวจสอบ</span>' : ''}
+      <button class="text-rose-500 px-1" onclick="A.tDel(${i})" aria-label="ลบ">✕</button></div>`).join('');
+    let res = '';
+    const hitSet = new Set();
+    if (S.lastCheck) {
+      const total = S.lastCheck.reduce((a, c) => a + c.total, 0), won = S.lastCheck.filter(c => c.hits.length).length;
+      S.lastCheck.forEach(c => c.hits.forEach(h => hitSet.add(h.g.id + '|' + h.num)));
+      res = `<div id="chkres" class="space-y-2"><div class="rounded-2xl p-4 text-center ${won ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-100' : 'bg-slate-100 dark:bg-slate-800'}">
+        <div class="text-3xl">${won ? '🎉' : '🍀'}</div><div class="font-bold">${won ? `ถูกรางวัล ${won} ใบ` : 'ยังไม่ถูกรางวัล'}</div>${total ? `<div class="text-sm">รวมเงินรางวัลประมาณ ${fmt(total)}</div>` : ''}</div>
+        ${S.lastCheck.map(c => `<div class="${CARD} !p-3 ${c.hits.length ? 'ring-2 ring-emerald-500' : ''}"><div class="flex justify-between items-center"><span class="font-mono text-xl tracking-widest font-bold">${esc(c.t)}</span><span class="text-sm ${c.hits.length ? 'text-emerald-600 font-bold' : 'text-slate-500'}">${c.hits.length ? '✅ ถูกรางวัล' : '❌ ไม่ถูก'}</span></div>
+          ${c.hits.map(h => `<div class="flex justify-between text-sm mt-1"><span>🏆 ${esc(h.g.name)} <span class="font-mono text-xs text-slate-500">(${esc(h.num)})</span></span><span>${fmt(h.g.reward)}</span></div>`).join('')}
+          ${c.hits.length > 1 ? `<div class="text-right text-sm font-bold mt-1 border-t border-slate-200 dark:border-slate-700 pt-1">รวม ${fmt(c.total)}</div>` : ''}</div>`).join('')}</div>`;
+    }
+    return `<div class="space-y-4">${secTitle('✅ ตรวจผลรางวัล')}
+      ${resultNotice(r)}
+      <div class="${CARD} !p-3 flex items-center justify-between gap-2"><div class="text-sm"><div class="font-semibold">${L.icon} ${L.name}</div><div class="text-slate-500 text-xs">${r ? 'งวด ' + esc(r.date || '—') : 'ยังไม่มีผลรางวัล'}</div></div><div class="flex gap-2"><button class="${BS}" onclick="A.picker()">เปลี่ยนงวด</button><button class="${BS}" onclick="A.editResult()">✍️</button></div></div>
+      <div class="${CARD} space-y-2"><div class="font-bold">เลขสลาก <span class="text-xs font-normal text-slate-500">(สูงสุด 10 ใบ)</span></div>${rows}
+        <div class="flex flex-wrap gap-2 pt-1"><button class="${BS}" onclick="A.tAdd()" ${S.tickets.length >= 10 ? 'disabled' : ''}>+ เพิ่มใบ</button><button class="${BS}" onclick="Voice.open()">🎤 พูดเลข</button><button class="${BS}" onclick="go('camera')">📷</button><button class="${BS}" onclick="go('gallery')">🖼️</button><button class="${BS}" onclick="A.tClear()">ล้าง</button></div>
+        <button class="${BP} w-full !py-3 text-base" onclick="A.check()">🔍 ตรวจผลทั้งหมด</button></div>
+      ${res}
+      ${r && r.source !== 'demo' ? `<button class="${BS} w-full" onclick="A.shareResult()">📤 แชร์ผลรางวัลนี้ให้เพื่อน (LINE / Facebook)</button>` : ''}
+      ${r ? `<details open><summary class="font-bold cursor-pointer mb-2">ผลรางวัลทั้งหมด — งวด ${esc(r.date || '')}</summary><div class="grid gap-2">${groupChips(r, hitSet)}</div></details>` : ''}</div>${disc()}`;
+  },
+  history() {
+    const tab = S.hTab, tabs = `<div class="flex gap-2 mb-3"><button class="${tab === 'stats' ? BP : BS}" onclick="S.hTab='stats';render()">📊 สถิติหวยที่ออก</button><button class="${tab === 'checks' ? BP : BS}" onclick="S.hTab='checks';render()">🧾 ที่ตรวจในเซสชัน</button></div>`;
+    let body = '';
+    if (tab === 'checks') {
+      const l = S.checks.filter(c => c.ts >= S.started);
+      body = `<div class="space-y-2">${l.length ? `<button class="${BD} w-full" onclick="A.clearChecks()">🗑️ ลบประวัติการตรวจทั้งหมด</button>` : ''}${l.map(checkRow).join('') || '<div class="text-sm text-slate-500">ยังไม่ได้ตรวจในเซสชันนี้</div>'}</div>`;
+    } else if (S.lottery === 'thai') {
+      if (!S.stats) body = `<div class="${CARD} text-center space-y-2"><div class="text-sm">โหลดผลย้อนหลัง 30 งวดล่าสุดเพื่อดูสถิติ</div><button class="${BP}" onclick="A.loadStats()" ${S.statsBusy ? 'disabled' : ''}>${S.statsBusy ? 'กำลังโหลด…' : 'โหลดสถิติ'}</button></div>`;
+      else body = statsHTML(S.stats);
+    } else {
+      const l = S.mres[S.lottery] || [];
+      body = l.length ? statsHTML(l) : '<div class="text-sm text-slate-500">ยังไม่มีผลที่บันทึกไว้ — กรอกผลรางวัลที่หน้าแรก</div>';
+    }
+    return `<div>${secTitle('📊 ประวัติ')}${tabs}${body}</div>${disc()}`;
+  },
+  notifs() {
+    return `<div>${secTitle('🔔 การแจ้งเตือน')}<div class="flex gap-2 mb-3"><button class="${BS}" onclick="A.readAll()">อ่านทั้งหมด</button><button class="${BS}" onclick="A.clearNotifs()">ล้างทั้งหมด</button></div>
+      <div class="space-y-2">${S.notifs.map(n => `<div class="${CARD} !p-3 ${n.read ? 'opacity-70' : 'border-teal-500'}"><div class="font-semibold text-sm">${esc(n.t)}</div><div class="text-sm">${esc(n.b)}</div><div class="text-[11px] text-slate-500 mt-1">${new Date(n.ts).toLocaleString('th-TH')}</div></div>`).join('') || '<div class="text-sm text-slate-500">ไม่มีการแจ้งเตือน</div>'}</div>
+      <p class="text-xs text-slate-500 mt-3">การแจ้งเตือนในแอปจะทำงานเมื่อเปิดแอปและพบงวดใหม่/ผลการตรวจ (เปิด-ปิดได้ที่ตั้งค่า)</p></div>${disc()}`;
+  },
+  profile() {
+    const wins = S.checks.filter(c => c.wins.length).length;
+    const emojis = ['🙂', '😎', '🤑', '🍀', '🦄', '🐯', '🐲', '🐶', '🐱', '🦊', '🐼', '🌟'];
+    return `<div class="space-y-4">${secTitle('👤 โปรไฟล์')}
+      <div class="${CARD} flex items-center gap-4"><div class="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden flex items-center justify-center text-4xl">${avatarHTML()}</div>
+        <div class="flex-1 space-y-2"><input class="${INP}" placeholder="ชื่อเล่น" value="${esc(S.profile.name)}" onchange="A.setName(this.value)">
+        <label class="${BS} cursor-pointer text-xs">📷 อัปโหลดรูป<input type="file" accept="image/*" class="hidden" onchange="A.avatarFile(this.files[0])"></label></div></div>
+      <div class="${CARD}"><div class="font-semibold mb-2 text-sm">เลือกอวาตาร์</div><div class="grid grid-cols-6 gap-2">${emojis.map(e => `<button class="text-2xl rounded-xl p-2 bg-slate-100 dark:bg-slate-700" onclick="A.setAvatar('${e}')">${e}</button>`).join('')}</div></div>
+      <div class="grid grid-cols-2 gap-2"><div class="${CARD} text-center"><div class="text-2xl font-bold">${S.checks.length}</div><div class="text-xs text-slate-500">ใบที่เคยตรวจ</div></div><div class="${CARD} text-center"><div class="text-2xl font-bold">${wins}</div><div class="text-xs text-slate-500">ใบที่ถูกรางวัล</div></div></div></div>${disc()}`;
+  },
+  settings() {
+    const th = (v, n) => `<button class="${S.set.theme === v ? BP : BS} flex-1" onclick="A.setTheme('${v}')">${n}</button>`;
+    const tg = (k, on) => `<button onclick="A.toggle('${k}')" class="relative w-12 h-7 rounded-full transition ${on ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'}"><span class="absolute top-0.5 ${on ? 'left-6' : 'left-0.5'} w-6 h-6 rounded-full bg-white transition-all"></span></button>`;
+    return `<div class="space-y-3">${secTitle('⚙️ ตั้งค่า')}
+      <div class="${CARD} space-y-2"><div class="font-semibold text-sm">ธีม</div><div class="flex gap-2">${th('light', '☀️ สว่าง')}${th('dark', '🌙 มืด')}${th('auto', '🖥️ อัตโนมัติ')}</div>
+        <div class="font-semibold text-sm pt-2">ขนาดตัวอักษร (${Math.round(S.set.scale * 100)}%)</div><input type="range" min="0.9" max="1.3" step="0.05" value="${S.set.scale}" class="w-full accent-teal-600" oninput="A.setScale(this.value)"></div>
+      <div class="${CARD} space-y-3"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">การแจ้งเตือนในแอป</div><div class="text-xs text-slate-500">แจ้งเมื่อพบงวดใหม่/ถูกรางวัล</div></div>${tg('notif', S.set.notif)}</div>
+        <div class="flex justify-between items-center"><div><div class="font-semibold text-sm">ปรับภาพก่อน OCR</div><div class="text-xs text-slate-500">ขาวดำ + เพิ่มคอนทราสต์ ช่วยให้อ่านแม่นขึ้น</div></div>${tg('pre', S.set.pre)}</div></div>
+      <div class="${CARD} space-y-3"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">⏰ เตือนใกล้เวลาออกผล</div><div class="text-xs text-slate-500">เตือนก่อนถึงเวลา และอีกครั้งเมื่อถึงเวลา (เวลาไทย) — ทำงานเฉพาะตอนเปิดแอปค้างไว้</div></div>${tg('remind', S.set.remind).replace("A.toggle('remind')", 'A.toggleRemind()')}</div>
+        ${S.set.remind ? `<div class="flex items-center gap-2 text-sm">เตือนล่วงหน้า <input type="number" min="1" max="120" class="${INP} !w-20 text-center" value="${S.set.lead}" onchange="A.setLead(this.value)"> นาที</div>
+        ${Object.keys(LOTTO).map(l => { const c = sched(l); return `<div class="rounded-xl border border-slate-200 dark:border-slate-700 p-2 space-y-2"><label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" class="accent-teal-600 w-4 h-4" ${c.on ? 'checked' : ''} onchange="A.setSched('${l}',{on:this.checked})"> ${LOTTO[l].icon} ${LOTTO[l].name}</label>
+          <div class="flex flex-wrap items-center gap-2 text-sm"><input type="time" class="${INP} !w-auto" value="${c.time}" onchange="A.setSched('${l}',{time:this.value})">
+          ${c.dates != null ? `วันที่ <input class="${INP} !w-28" value="${esc(c.dates)}" onchange="A.setSched('${l}',{dates:this.value})" placeholder="1,16">` : DAYN.map((n, d) => `<button class="chip border ${(c.days || []).includes(d) ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-300 dark:border-slate-600'}" onclick="A.togDay('${l}',${d})">${n}</button>`).join('')}</div></div>`}).join('')}
+        <div class="text-[11px] text-slate-500 leading-relaxed">วัน/เวลาเริ่มต้นเป็นค่าประมาณที่ยังไม่ได้ยืนยันกับผู้ออกสลาก (หวยไทยอาจเลื่อนเมื่อติดวันหยุด) — ตรวจกับประกาศจริงแล้วแก้ให้ตรง · ถ้าต้องการเตือนแม้ปิดแอป ใช้ NOTIFY_WEBHOOK ของบอท (ดู README)</div>
+        <button class="${BS} w-full" onclick="A.testRemind()">ทดสอบการเตือน</button>` : ''}</div>
+      <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🌐 ดึงผลจากเว็บโดยตรง</div><div class="text-xs text-slate-500">ฮานอย (xosominhngoc.com) · ลาว (lottery.kapook.com) · ธ.ก.ส. (baac.or.th)</div></div>${tg('web', S.set.web !== false).replace("A.toggle('web')", 'A.toggleWeb()')}</div>
+        <div class="text-xs text-slate-500 leading-relaxed">เบราว์เซอร์อ่านเว็บอื่นตรง ๆ ไม่ได้ จึงต้องผ่านพร็อกซี — ทางที่เสถียรคือพร็อกซีของคุณเอง (Cloudflare Worker ฟรี ดู cf-worker.js ในชุดบอท) ใส่ URL ตามรูปแบบ <code>https://ชื่อคุณ.workers.dev/?url={url}</code></div>
+        <input class="${INP} text-sm" value="${esc(S.set.proxy || '')}" onchange="A.setProxy(this.value)" placeholder="https://ชื่อคุณ.workers.dev/?url={url}">
+        <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label>
+        <div class="text-[11px] text-slate-500">หวยมาเลย์: ยังไม่มีเว็บที่ดึงผ่านแอปได้ (เว็บผู้ให้บริการสร้างผลด้วย JavaScript) — กรอกเอง หรือใช้บอท</div></div>
+      <div class="${CARD} space-y-2"><div class="font-semibold text-sm">แหล่งข้อมูลหวยไทย (API)</div><input class="${INP} text-sm" value="${esc(S.set.api)}" onchange="A.setApi(this.value)" placeholder="เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว">
+        <div class="text-xs text-slate-500">เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว (หวยไทยย้อนหลังทุกงวด) · ถ้ามีบอทของคุณเอง ใส่ URL ที่มี /latest /list/{หน้า} /lotto/{id} และ /other/{ชนิดหวย} สำหรับหวยอีก 4 ชนิด</div><div class="flex gap-2"><button class="${BS}" onclick="A.setApi('')">ใช้ชุดข้อมูลในตัว</button><button class="${BP}" onclick="S.lottery='thai';loadHome()">ทดสอบ/โหลดใหม่</button></div></div>
+      <div class="${CARD} space-y-2"><div class="font-semibold text-sm">ลิงก์แอป (สำหรับแชร์/ชวนเพื่อน)</div><input class="${INP} text-sm" value="${esc(S.set.shareUrl || '')}" onchange="A.setShareUrl(this.value)" placeholder="https://ชื่อคุณ.github.io/lottosnap/"><div class="text-xs text-slate-500">ใส่ลิงก์เว็บที่คุณโฮสต์ไฟล์แอปนี้ไว้ เพื่อให้ข้อความแชร์และชวนเพื่อนแนบลิงก์ที่เพื่อนกดเข้าใช้ได้</div><button class="${BP} w-full" onclick="A.invite()">🤝 ชวนเพื่อนใช้ LottoSnap</button></div>
+      <div class="${CARD} space-y-2"><button class="${BS} w-full" onclick="go('about')">ℹ️ เกี่ยวกับแอป</button><button class="${BD} w-full" onclick="A.wipe()">🗑️ ลบข้อมูลทั้งหมดในเครื่อง</button></div></div>${disc()}`;
+  },
+  lucky() {
+    markLuckyVisit();
+    const iso = ictISO(), L = dailyLucky(iso), st = luckyStreak(), q = S.dreamQ || '', hits = dreamMatch(q);
+    const [y, m, d] = iso.split('-').map(Number);
+    const numChip = n => `<span class="px-3 py-1.5 rounded-xl bg-white/20 font-mono text-2xl font-extrabold tracking-widest">${n}</span>`;
+    const dayOpts = `<option value="">ไม่ระบุ</option>` + DAYFULL.map((n, i) => `<option value="${i}" ${S.set.birthDay === i ? 'selected' : ''}>วัน${n}</option>`).join('');
+    return `<div class="space-y-3">${secTitle('🔮 สายมู')}
+      <div class="rounded-2xl p-4 text-white shadow" style="background:linear-gradient(135deg,${L.color[1]},#4c1d95)">
+        <div class="flex justify-between items-start"><div><div class="text-xs opacity-80">เลขมงคลประจำวัน</div><div class="font-bold">วัน${DAYFULL[L.wd]}ที่ ${d} ${THM[m - 1]} ${y + 543}</div></div><span class="chip bg-white/20 text-[11px]">🔥 เปิดดูต่อเนื่อง ${st} วัน</span></div>
+        <div class="flex flex-wrap gap-2 my-3">${L.two.map(numChip).join('')}${L.three.map(numChip).join('')}</div>
+        <div class="text-sm">สีมงคลวันนี้: <b>${L.color[0]}</b>${L.mine ? ` · สีวันเกิดของคุณ: <b>${L.mine[0]}</b>` : ''}</div>
+        <div class="text-sm mt-1 opacity-95">✨ ${L.fortune}</div></div>
+      <div class="text-[11px] text-slate-500 leading-relaxed">เลขมงคลประจำวันสุ่มจากวันที่ (และวันเกิดถ้าระบุ) ใช้เพื่อความบันเทิงและเป็นกำลังใจเท่านั้น ไม่ใช่การทำนายผลรางวัล และไม่มีผลต่อการออกรางวัลใด ๆ — ผลหวยออกโดยการสุ่ม ไม่มีเลขใดมีโอกาสมากกว่ากัน</div>
+      <div class="${CARD} flex items-center gap-2 text-sm"><span>วันเกิดของคุณ</span><select class="${INP} !w-auto" onchange="A.setBirthDay(this.value)">${dayOpts}</select><span class="text-xs text-slate-500">(เก็บในเครื่องเท่านั้น)</span></div>
+      <div class="${CARD} space-y-2"><div class="font-semibold">🌙 ทำนายฝัน</div>
+        <div class="flex gap-2"><input id="dq" class="${INP}" value="${esc(q)}" placeholder="เล่าฝันสั้น ๆ เช่น ฝันเห็นงูใหญ่ในน้ำ" onkeydown="if(event.key==='Enter')A.dreamGo()"><button class="${BP}" onclick="A.dreamGo()">ดู</button></div>
+        ${q ? (hits.length ? hits.map(e => `<div class="rounded-xl bg-violet-50 dark:bg-violet-900/30 p-3 space-y-1"><div class="text-sm font-semibold">ฝันถึง “${esc(e.k[0])}”</div><div class="text-sm">${esc(e.m)}</div><div class="flex gap-2 items-center"><span class="text-xs text-slate-500">เลขที่เกี่ยวข้องตามความเชื่อ</span>${e.n.map(n => `<span class="chip bg-violet-200 dark:bg-violet-800 font-mono font-bold">${esc(n)}</span>`).join('')}</div></div>`).join('') : `<div class="text-sm text-slate-500">ยังไม่พบคำที่ตรงในตำราตัวอย่าง — ลองใช้คำสั้น ๆ เช่น งู ปลา น้ำ หรือเพิ่มความหมายของคุณเองด้านล่าง</div>`) : ''}
+        <details class="text-sm"><summary class="cursor-pointer text-teal-600">+ เพิ่มความหมายของฉันเอง</summary><div class="flex flex-wrap gap-2 mt-2"><input id="dk" class="${INP} !w-32" placeholder="คำ เช่น นาฬิกา"><input id="dm" class="${INP} flex-1 min-w-[10rem]" placeholder="ความหมาย"><input id="dn" class="${INP} !w-28 font-mono" placeholder="เลข 12 21"><button class="${BS}" onclick="A.dreamAdd()">บันทึก</button></div></details>
+        <div class="text-[11px] text-slate-500 leading-relaxed">ชุดเริ่มต้นเป็นรายการตัวอย่างที่ผู้พัฒนารวบรวมแบบหลวม ๆ ตามคำเล่าขานทั่วไป ไม่ใช่ตำราอ้างอิงและแต่ละสำนักให้เลขไม่ตรงกัน ใช้เพื่อความสนุกเท่านั้น ไม่มีผลต่อรางวัล</div></div>
+      <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🔔 เตือนเลขมงคลประจำวัน</div><div class="text-xs text-slate-500">เตือนทุกเช้าเวลาที่ตั้ง (ต้องเปิดแอปค้างไว้)</div></div><button onclick="A.toggleLucky()" class="relative w-12 h-7 rounded-full transition ${S.set.luckyRemind ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'}"><span class="absolute top-0.5 ${S.set.luckyRemind ? 'left-6' : 'left-0.5'} w-6 h-6 rounded-full bg-white transition-all"></span></button></div>
+        ${S.set.luckyRemind ? `<input type="time" class="${INP} !w-auto" value="${S.set.luckyTime || '07:00'}" onchange="A.setLuckyTime(this.value)">` : ''}</div></div>${disc()}`;
+  },
+  about() {
+    return `<div class="space-y-3">${secTitle('ℹ️ เกี่ยวกับ LottoSnap')}
+      <div class="${CARD} bg-amber-50 dark:bg-amber-900/20 text-sm leading-relaxed"><b>ข้อความปฏิเสธความรับผิดชอบ</b><br>LottoSnap เป็นแอป <b>ฟรี</b> สำหรับ <b>ตรวจผลรางวัลเท่านั้น</b> ไม่มีการซื้อขายสลาก ไม่รับพนัน ไม่ทำนายผลรางวัลใด ๆ (ส่วน “สายมู” เป็นเนื้อหาเพื่อความบันเทิง ไม่มีผลต่อการออกรางวัล) ข้อมูลจาก API/การอ่านภาพอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการของผู้ออกสลากทุกครั้งก่อนดำเนินการใด ๆ ผู้พัฒนาไม่รับผิดชอบความเสียหายจากการใช้ข้อมูลในแอป สถิติย้อนหลังไม่ช่วยทำนายผลรางวัล</div>
+      <div class="${CARD} text-sm space-y-2"><b>วิธีทำงาน</b><ul class="list-disc pl-5 space-y-1"><li>ถ่ายภาพ/อัปโหลดสลาก → อ่าน QR (jsQR) และตัวเลข 0-9 (Tesseract.js) โดยไม่สลับลำดับ</li><li>ทุกเลขต้องให้คุณตรวจ/แก้ไขก่อนกดตรวจผล</li><li>1 ใบถูกได้หลายรางวัลพร้อมกัน เช่น รางวัลที่ 5 + เลขท้าย 2 ตัว</li><li>ข้อมูลทั้งหมดเก็บในเครื่องของคุณ ภาพไม่ถูกอัปโหลดไปไหน (OCR ทำงานบนเบราว์เซอร์)</li></ul></div>
+      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ออมทรัพย์ ธ.ก.ส./ลาว/ฮานอย/มาเลย์: กรอกผลรางวัลที่ประกาศแล้วเอง (โครงสร้างรางวัลเริ่มต้นเป็นแบบประมาณ แก้ไข/เพิ่มได้)</li></ul></div>
+      <div class="text-xs text-center text-slate-500">LottoSnap v1.0</div></div>`;
+  }
+};
+function checkRow(c) {
+  return `<div class="${CARD} !p-3 flex items-center justify-between"><div><div class="font-mono font-bold tracking-widest">${esc(c.num)}</div><div class="text-[11px] text-slate-500">${LOTTO[c.lot] ? LOTTO[c.lot].name : ''} · งวด ${esc(c.date || '—')} · ${new Date(c.ts).toLocaleString('th-TH')}</div></div>
+    <div class="flex items-center gap-2"><div class="text-right text-sm ${c.wins.length ? 'text-emerald-600 font-bold' : 'text-slate-500'}">${c.wins.length ? '✅ ' + esc(c.wins.join(', ')) : '❌ ไม่ถูก'}</div><button class="p-1 text-slate-400 hover:text-rose-600" aria-label="ลบรายการ" onclick="A.delCheck(${S.checks.indexOf(c)})">🗑️</button></div></div>`;
+}
+const THM = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const DAYFULL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+function drawDate(r) {
+  let m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(r.id || '');
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = /(\d{1,2})\s+(\S+)\s+(\d{4})/.exec(r.date || '');
+  if (m && THM.includes(m[2])) { const y = +m[3]; return new Date(y > 2400 ? y - 543 : y, THM.indexOf(m[2]), +m[1]) }
+  return null;
+}
+function lastN(r, n) {   // เลขท้าย n ตัวของงวด (ใช้กลุ่มรางวัลที่มีชื่อ id ตรงชนิดหวย ไม่งั้นตัดจากรางวัลแบบตรงทั้งเลขกลุ่มแรก)
+  const ids = n === 2 ? ['runningNumberBackTwo', 'l2', 'h2', 'g2'] : ['runningNumberBackThree', 'l3', 'h3', 'g3'];
+  for (const id of ids) { const g = (r.groups || []).find(x => x.id === id); if (g && g.numbers.length) return g.numbers.filter(x => x.length === n) }
+  const f = (r.groups || []).find(x => x.match === 'full' && x.numbers[0] && x.numbers[0].length >= n);
+  return f ? [f.numbers[0].slice(-n)] : [];
+}
+function statsHTML(list) {
+  const dated = list.map(r => ({ r, d: drawDate(r) }));
+  const days = [...new Set(dated.filter(x => x.d).map(x => x.d.getDay()))].sort();
+  const sel = days.includes(S.statDay) ? S.statDay : null;
+  const sub = dated.filter(x => sel === null || (x.d && x.d.getDay() === sel)).map(x => x.r);
+  const tally = (n, k) => { const f = {}; sub.forEach(r => lastN(r, n).forEach(v => f[v] = (f[v] || 0) + 1)); return Object.entries(f).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, k) };
+  const top2 = tally(2, 8), top3 = tally(3, 6);
+  const dig = Array(10).fill(0); sub.forEach(r => lastN(r, 2).forEach(v => v.split('').forEach(c => dig[+c]++))); const mx = Math.max(1, ...dig);
+  const chip = ([n, c]) => `<span class="chip bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200"><b class="font-mono mr-1">${n}</b>×${c}</span>`;
+  const dayBtn = (v, t) => `<button class="chip border ${sel === v ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-300 dark:border-slate-600'}" onclick="A.statDay(${v})">${t}</button>`;
+  const th = list[0] && list[0].lottery === 'thai';
+  const small = sub.length < 30 ? `<div class="text-[11px] text-amber-700 dark:text-amber-300">ตัวอย่างมีเพียง ${sub.length} งวด — ความถี่ในช่วงสั้นผันผวนตามธรรมชาติ ยังไม่มีความหมายทางสถิติ</div>` : '';
+  const row = r => { const d = drawDate(r); return `<tr class="border-t border-slate-100 dark:border-slate-700 text-center"><td class="p-2 text-left whitespace-nowrap">${esc(r.date || '—')}</td><td>${d ? DAYFULL[d.getDay()].slice(0, 3) : '—'}</td>${th ? `<td class="font-mono">${esc(grp(r, 'prizeFirst').numbers[0] || '—')}</td>` : ''}<td class="font-mono">${esc(lastN(r, 3).join(' ') || '—')}</td><td class="font-mono">${esc(lastN(r, 2).join(' ') || '—')}</td></tr>` };
+  return `<div class="space-y-3"><div class="text-xs rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 p-2">สถิติเพื่อดูข้อมูลย้อนหลังเท่านั้น ผลแต่ละงวดเป็นอิสระต่อกัน ตัวเลขที่เคยออกบ่อยไม่ได้ทำให้ออกอีก และไม่สามารถใช้ทำนายผลรางวัลได้</div>
+    ${days.length ? `<div class="flex flex-wrap gap-2 items-center"><span class="text-xs text-slate-500">แยกตามวัน</span>${dayBtn(null, 'ทั้งหมด')}${days.map(d => dayBtn(d, 'วัน' + DAYFULL[d])).join('')}</div>` : ''}
+    <div class="${CARD} space-y-2"><div class="font-semibold text-sm">เลขท้าย 2 ตัวที่ออกบ่อย (${sub.length} งวด${sel !== null ? ' · วัน' + DAYFULL[sel] : ''})</div><div class="flex flex-wrap gap-2">${top2.map(chip).join('') || '<span class="text-xs text-slate-500">ไม่มีข้อมูล</span>'}</div>
+      <div class="font-semibold text-sm pt-1">เลขท้าย 3 ตัวที่ออกบ่อย</div><div class="flex flex-wrap gap-2">${top3.map(chip).join('') || '<span class="text-xs text-slate-500">ไม่มีข้อมูล</span>'}</div>
+      <div class="font-semibold text-sm pt-1">ความถี่ของแต่ละหลักในเลขท้าย 2 ตัว</div><div class="flex items-end gap-1 h-24">${dig.map((c, i) => `<div class="flex-1 flex flex-col items-center justify-end h-full"><div class="text-[10px]">${c}</div><div class="w-full bg-teal-500 rounded-t" style="height:${Math.max(3, c / mx * 70)}%"></div><div class="text-xs font-mono">${i}</div></div>`).join('')}</div>${small}</div>
+    <div class="overflow-x-auto ${CARD} !p-0"><table class="w-full text-xs"><thead class="bg-slate-100 dark:bg-slate-700"><tr><th class="p-2 text-left">งวด</th><th>วัน</th>${th ? '<th>รางวัลที่ 1</th>' : ''}<th>ท้าย 3</th><th>ท้าย 2</th></tr></thead><tbody>${sub.map(row).join('')}</tbody></table></div>
+    ${th ? '' : `<details><summary class="text-sm font-semibold cursor-pointer">ผลทุกรางวัลของแต่ละงวด</summary><div class="space-y-2 mt-2"><button class="${BD} w-full" onclick="A.clearRes()">🗑️ ลบผลที่บันทึกของ${esc(LOTTO[S.lottery].name)}ทั้งหมด</button>${sub.map(r => `<div class="${CARD} !p-3"><div class="flex justify-between items-center"><div class="font-semibold text-sm">งวด ${esc(r.date || '—')}</div><button class="p-1 text-slate-400 hover:text-rose-600" aria-label="ลบงวดนี้" onclick="A.delRes(${(S.mres[S.lottery] || []).indexOf(r)})">🗑️</button></div><div class="text-xs mt-1 break-all">${r.groups.filter(g => g.numbers.length).map(g => esc(g.name) + ': <b class="font-mono">' + esc(g.numbers.join(' ')) + '</b>').join(' · ')}</div></div>`).join('')}</div></details>`}</div>`;
+}
+
+/* ---------- แชร์ผลรางวัล / ชวนเพื่อน (LINE, Facebook, ระบบแชร์ของเครื่อง, คัดลอก, ภาพการ์ด) ---------- */
+function appUrl() { const s = (S.set.shareUrl || '').trim(); return s || (/^https?:/.test(location.href) ? location.href.split('#')[0] : '') }
+function resultText(r) {
+  const lines = ['🎟️ ผล' + LOTTO[r.lottery].name + ' งวด ' + r.date];
+  r.groups.forEach(g => { if (g.numbers.length && g.numbers.length <= 3) lines.push(g.name + ': ' + g.numbers.join(' ')) });
+  if (r.lottery === 'thai') lines.push('(รางวัลที่ 2-5 ดูทั้งหมดในแอป)');
+  lines.push('', '✅ ตรวจผลฟรีด้วย LottoSnap' + (appUrl() ? '\n' + appUrl() : ''), '⚠️ ผลอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการ');
+  return lines.join('\n');
+}
+const inviteText = () => '🎟️ ตรวจหวยฟรีด้วย LottoSnap — ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจได้หลายใบพร้อมกัน ไม่มีการซื้อขายและไม่มีพนัน' + (appUrl() ? '\n' + appUrl() : '');
+const inviteCard = () => `<div class="${CARD} flex items-center justify-between gap-3"><div><div class="font-semibold">🤝 ชวนเพื่อนใช้ LottoSnap</div><div class="text-xs text-slate-500">ส่งลิงก์ผ่าน LINE / Facebook</div></div><button class="${BP}" onclick="A.invite()">ชวนเพื่อน</button></div>`;
+async function clip(t) {
+  try { await navigator.clipboard.writeText(t); return true } catch (e) {
+    const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+    let ok = false; try { ok = document.execCommand('copy') } catch (e2) { } a.remove(); return ok;
+  }
+}
+function openShare(title, text, card) {
+  S.share = { text };
+  openModal(`<div class="flex justify-between items-center mb-2"><div class="font-bold">${esc(title)}</div><button onclick="closeModal()" class="text-xl">✕</button></div>
+    <pre class="whitespace-pre-wrap text-sm rounded-xl bg-slate-100 dark:bg-slate-700 p-3 max-h-40 overflow-auto" style="font-family:inherit">${esc(text)}</pre>
+    ${appUrl() ? '' : `<div class="text-xs rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 p-2 mt-2">ยังไม่มีลิงก์แอป — ใส่ลิงก์เว็บที่คุณโฮสต์แอปไว้ได้ที่ <a class="underline" href="#settings" onclick="closeModal()">ตั้งค่า</a> เพื่อให้เพื่อนกดเข้าใช้ได้</div>`}
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button class="${BP}" onclick="A.shLine()">💬 LINE</button>
+      <button class="${BP}" onclick="A.shFb()">📘 Facebook</button>
+      ${navigator.share ? `<button class="${BS}" onclick="A.shNative()">📲 แชร์ผ่านเครื่อง</button>` : ''}
+      <button class="${BS}" onclick="A.shCopy()">📋 คัดลอกข้อความ</button>
+      ${card ? `<button class="${BS} col-span-2" onclick="A.shImage()">🖼️ แชร์เป็นภาพการ์ดผลรางวัล</button>` : ''}
+    </div>`);
+}
+function rr(x, X, Y, W, H, R) { x.beginPath(); x.moveTo(X + R, Y); x.arcTo(X + W, Y, X + W, Y + H, R); x.arcTo(X + W, Y + H, X, Y + H, R); x.arcTo(X, Y + H, X, Y, R); x.arcTo(X, Y, X + W, Y, R); x.closePath() }
+async function makeCard(r) {
+  try { await document.fonts.ready } catch (e) { }
+  const F = "'Noto Sans Thai', system-ui, sans-serif", c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+  const x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 1080, 1350); g.addColorStop(0, '#14b8a6'); g.addColorStop(1, '#0f766e');
+  x.fillStyle = g; x.fillRect(0, 0, 1080, 1350); x.textAlign = 'center'; x.fillStyle = '#fff';
+  x.font = '800 46px ' + F; x.fillText('🎟️ LottoSnap', 540, 100);
+  x.font = '700 58px ' + F; x.fillText('ผล' + LOTTO[r.lottery].name, 540, 205);
+  x.font = '500 42px ' + F; x.fillText('งวด ' + r.date, 540, 275);
+  const rows = r.groups.filter(q => q.numbers.length && q.numbers.length <= 3), top = rows.shift();
+  let y = 330;
+  if (top) {
+    x.fillStyle = 'rgba(255,255,255,.18)'; rr(x, 90, y, 900, 250, 36); x.fill(); x.fillStyle = '#fff';
+    x.font = '600 40px ' + F; x.fillText(top.name, 540, y + 70);
+    x.font = '800 ' + (top.numbers.join(' ').length > 8 ? 92 : 140) + 'px ui-monospace, Menlo, Consolas, monospace'; x.fillText(top.numbers.join(' '), 540, y + 195);
+    y += 290;
+  }
+  rows.slice(0, 6).forEach(q => {
+    x.fillStyle = 'rgba(255,255,255,.14)'; rr(x, 90, y, 900, 100, 26); x.fill(); x.fillStyle = '#fff';
+    x.textAlign = 'left'; x.font = '600 34px ' + F; x.fillText(q.name, 125, y + 63);
+    x.textAlign = 'right'; x.font = '800 44px ui-monospace, Menlo, Consolas, monospace'; x.fillText(q.numbers.join('  '), 955, y + 66);
+    x.textAlign = 'center'; y += 116;
+  });
+  x.font = '600 34px ' + F; x.fillText('ตรวจผลฟรีด้วย LottoSnap' + (appUrl() ? ' · ' + appUrl().replace(/^https?:\/\//, '') : ''), 540, 1255);
+  x.font = '400 26px ' + F; x.fillStyle = 'rgba(255,255,255,.8)'; x.fillText('ผลอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการ', 540, 1305);
+  return c;
+}
+
+/* ---------- Actions ---------- */
+const A = {
+  setLot(k) { S.lottery = k; LS.set('lottery', k); S.lastCheck = null; S.useManual = false; if (k === 'thai' && !S.draw) loadHome(); else { render(); loadOther(k) } },
+  /* candidates */
+  cToggle(id, v) { const c = S.cands.find(x => x.id === id); if (c) c.checked = v },
+  cEdit(id, el) { const c = S.cands.find(x => x.id === id); if (!c) return; c.v = el.value.replace(/\D/g, ''); if (el.value !== c.v) el.value = c.v },
+  cDel(id) { S.cands = S.cands.filter(c => c.id !== id); renderCands() },
+  cNew() { S.cands.push({ id: ++S.uid, v: '', src: 'เอง', checked: true }); renderCands() },
+  cClear() { S.cands = []; S.notes = []; Cam.last = ''; renderCands() },
+  cAdd() {
+    const sel = S.cands.filter(c => c.checked && c.v); if (!sel.length) return toast('ยังไม่ได้เลือกเลข');
+    const n = addTickets(sel.map(c => c.v), 'scan'); S.cands = S.cands.filter(c => !(c.checked && c.v));
+    toast('เพิ่ม ' + n + ' ใบแล้ว — ตรวจเลขให้ตรงสลากก่อนกดตรวจผล'); renderCands();
+  },
+  async files(files) {
+    const list = [...files].filter(f => f.type.startsWith('image/')); if (!list.length) return;
+    for (const f of list) {
+      const url = URL.createObjectURL(f); const th = $('#thumbs'); if (th) th.insertAdjacentHTML('beforeend', `<img src="${url}" class="h-16 w-16 object-cover rounded-lg">`);
+      try {
+        const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('เปิดรูปไม่ได้')); i.src = url });
+        await runPipeline(toCanvas(img), f.name);
+      } catch (e) { toast(f.name + ': ' + e.message) }
+    }
+  },
+  /* tickets */
+  tEdit(i, el) { const t = S.tickets[i]; t.v = el.value.replace(/\D/g, ''); if (el.value !== t.v) el.value = t.v },
+  tAdd() { if (S.tickets.length < 10) { S.tickets.push({ v: '', src: 'manual', ok: true }); render() } },
+  tDel(i) { S.tickets.splice(i, 1); if (!S.tickets.length) S.tickets.push({ v: '', src: 'manual', ok: true }); S.lastCheck = null; render() },
+  tClear() { S.tickets = [{ v: '', src: 'manual', ok: true }]; S.lastCheck = null; render() },
+  check() {
+    const r = curResult(); if (!r) return toast('ยังไม่มีผลรางวัล — เลือกงวดหรือกรอกผลเองก่อน');
+    const ts = S.tickets.filter(t => t.v); if (!ts.length) return toast('กรอกเลขสลากก่อน');
+    const bad = ts.filter(t => S.lottery === 'thai' ? t.v.length !== 6 : t.v.length < 2);
+    if (bad.length) return toast(S.lottery === 'thai' ? 'เลขสลากไทยต้องมี 6 หลัก: ' + bad.map(b => b.v).join(', ') : 'เลขสั้นเกินไป');
+    const un = ts.filter(t => t.src !== 'manual' && !t.ok);
+    if (un.length) {
+      openModal(`<div class="font-bold text-lg mb-1">ยืนยันเลขที่สแกน/พูดได้</div><div class="text-sm text-slate-500 mb-3">เทียบกับสลากจริงทีละหลัก แก้ไขได้ในช่องด้านล่าง</div>
+        <div class="space-y-2">${un.map(t => `<input class="${INP} font-mono tracking-widest text-2xl text-center" inputmode="numeric" maxlength="${LOTTO[S.lottery].max}" value="${esc(t.v)}" oninput="A.tEdit(${S.tickets.indexOf(t)},this)">`).join('')}</div>
+        <div class="flex gap-2 mt-4"><button class="${BS} flex-1" onclick="closeModal()">ยกเลิก</button><button class="${BP} flex-1" onclick="A.cfOk()">ยืนยันและตรวจผล</button></div>`, false);
+      return;
+    }
+    A.doCheck(r, ts);
+  },
+  cfOk() { S.tickets.forEach(t => { if (t.v) t.ok = true }); closeModal(); render(); A.check() },
+  doCheck(r, ts) {
+    S.lastCheck = ts.map(t => { const hits = checkTicket(t.v, r); return { t: t.v, hits, total: hits.reduce((a, h) => a + (h.g.reward || 0), 0) } });
+    if (r.source === 'demo') { render(); const de = $('#chkres'); if (de) de.scrollIntoView({ behavior: 'smooth', block: 'start' }); return }
+    S.lastCheck.forEach(c => S.checks.unshift({ ts: Date.now(), lot: S.lottery, date: r.date, num: c.t, wins: c.hits.map(h => h.g.name), total: c.total }));
+    S.checks = S.checks.slice(0, 100); LS.set('checks', S.checks);
+    const won = S.lastCheck.filter(c => c.hits.length).length;
+    if (S.set.notif) addNotif(won ? '🎉 ถูกรางวัล ' + won + ' ใบ' : 'ตรวจผลเสร็จแล้ว', LOTTO[S.lottery].name + ' งวด ' + (r.date || '—') + ' · ตรวจ ' + ts.length + ' ใบ' + (won ? ' ถูก ' + won + ' ใบ' : ' ไม่ถูกรางวัล'));
+    render(); const e = $('#chkres'); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  /* draw picker */
+  async picker() {
+    if (S.lottery !== 'thai') {
+      const l = S.mres[S.lottery] || [], W = WEB[S.lottery];
+      if (!l.length && !W) return A.editResult();
+      return openModal(`<div class="font-bold mb-2">ผลที่บันทึกไว้</div>${W && W.hist ? `<button class="${BP} w-full mb-2" onclick="closeModal();loadWebHistory('${S.lottery}',14)">⬇️ ดึงผลย้อนหลัง 14 วันจากเว็บ</button>` : ''}${!l.length ? '<div class="text-sm text-slate-500 mb-2">ยังไม่มีผลที่บันทึกไว้</div>' : ''}<div class="space-y-2">${l.map((r, i) => `<button class="${BS} w-full justify-between" onclick="A.pickSaved(${i})"><span>งวด ${esc(r.date || '—')}</span>${i === 0 ? '<span class="text-xs">ใช้อยู่</span>' : ''}</button>`).join('')}</div>`);
+    }
+    A.renderPicker(); if (!S.listCache.length) await A.morePicker();
+  },
+  renderPicker(err) {
+    openModal(`<div class="flex justify-between items-center mb-2"><div class="font-bold">ตรวจงวดย้อนหลัง</div><button onclick="closeModal()" class="text-xl">✕</button></div>
+      <button class="${BP} w-full mb-2" onclick="A.pickLatest()">งวดล่าสุด</button>${err ? `<div class="text-sm text-rose-600 mb-2">${esc(err)}<div class="flex gap-2 mt-2"><button class="${BS}" onclick="A.useDemo()">🧪 ใช้ข้อมูลตัวอย่าง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div></div>` : ''}
+      <div class="space-y-1">${S.listCache.map(it => `<button class="${BS} w-full justify-start" onclick="A.pickDraw('${esc(it.id)}')">${esc(it.date || it.id)}</button>`).join('') || (err ? '' : '<div class="text-sm text-slate-500">กำลังโหลดรายการ…</div>')}</div>
+      ${S.listEnd ? '' : `<button class="${BS} w-full mt-2" onclick="A.morePicker()">โหลดเพิ่ม</button>`}`);
+  },
+  async morePicker() { try { await fetchListPage(); A.renderPicker() } catch (e) { A.renderPicker('โหลดรายการไม่สำเร็จ: ' + e.message) } },
+  async pickDraw(id) {
+    toast('กำลังโหลดผล…');
+    try { S.drawCache[id] = S.drawCache[id] || await loadDraw(id); const it = S.listCache.find(x => String(x.id) === String(id)); S.draw = S.drawCache[id]; if (it && !S.draw.date) S.draw.date = it.date; S.drawState = 'ok'; S.useManual = false; S.lastCheck = null; delete S.demo.thai; closeModal(); render() }
+    catch (e) { toast('โหลดไม่สำเร็จ: ' + e.message) }
+  },
+  pickLatest() { closeModal(); S.useManual = false; S.lastCheck = null; loadHome() },
+  pickSaved(i) { const l = S.mres[S.lottery]; const [x] = l.splice(i, 1); l.unshift(x); LS.set('mres', S.mres); S.lastCheck = null; delete S.demo[S.lottery]; closeModal(); render() },
+  /* manual result editor */
+  editResult() {
+    const r = curResult();
+    S.edit = r ? JSON.parse(JSON.stringify({ date: r.date, groups: r.groups })) : { date: '', groups: presetGroups(S.lottery) };
+    A.renderEdit();
+  },
+  renderEdit() {
+    const e = S.edit;
+    openModal(`<div class="flex justify-between items-center mb-2"><div class="font-bold">✍️ กรอกผลรางวัล — ${LOTTO[S.lottery].name}</div><button onclick="closeModal()" class="text-xl">✕</button></div>
+      <div class="text-xs text-slate-500 mb-2">กรอกตามประกาศอย่างเป็นทางการ แยกหลายเลขด้วยเว้นวรรคหรือจุลภาค · ผลจะถูกบันทึกในเครื่อง</div>
+      <input class="${INP} mb-2" placeholder="งวด/วันที่ (เช่น 16 พ.ย. 2569 หรือ รอบ 12:00)" value="${esc(e.date)}" oninput="S.edit.date=this.value">
+      ${S.lottery === 'lao' ? `<div class="flex gap-2 mb-2"><input id="lao4" class="${INP} font-mono" inputmode="numeric" maxlength="4" placeholder="เลขลาว 4 หลัก"><button class="${BS}" onclick="A.laoDerive()">สร้างอัตโนมัติ</button></div>` : ''}
+      <div class="space-y-2">${e.groups.map((g, i) => `<div class="rounded-xl border border-slate-200 dark:border-slate-700 p-2 space-y-1">
+        <div class="flex gap-2"><input class="${INP} !py-1 text-sm" value="${esc(g.name)}" oninput="S.edit.groups[${i}].name=this.value"><button class="text-rose-500 px-1" onclick="A.egDel(${i})">✕</button></div>
+        <div class="flex gap-2"><select class="${INP} !py-1 text-sm" onchange="S.edit.groups[${i}].match=this.value">${Object.entries(MATCH_LABEL).map(([k, v]) => `<option value="${k}" ${g.match === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <input class="${INP} !py-1 text-sm" inputmode="numeric" placeholder="เงินรางวัล (บาท)" value="${g.reward || ''}" oninput="S.edit.groups[${i}].reward=+this.value.replace(/\\D/g,'')||0"></div>
+        <textarea class="${INP} font-mono text-sm" rows="2" placeholder="เลขรางวัล" oninput="S.edit.groups[${i}].numbers=this.value.split(/[\\s,]+/).filter(x=>/^\\d+$/.test(x))">${esc(g.numbers.join(' '))}</textarea></div>`).join('')}</div>
+      <div class="flex flex-wrap gap-2 mt-3"><button class="${BS}" onclick="A.egAdd()">+ เพิ่มรางวัล</button><button class="${BS}" onclick="S.edit.groups=presetGroups(S.lottery);A.renderEdit()">รีเซ็ตโครงสร้าง</button><button class="${BP} flex-1" onclick="A.saveEdit()">บันทึก</button></div>`);
+  },
+  egAdd() { S.edit.groups.push(G('c' + Date.now(), 'รางวัลใหม่', 'full')); A.renderEdit() },
+  egDel(i) { S.edit.groups.splice(i, 1); A.renderEdit() },
+  laoDerive() {
+    const v = ($('#lao4').value || '').replace(/\D/g, ''); if (v.length !== 4) return toast('ใส่เลข 4 หลัก');
+    const m = { l4: v, l3: v.slice(1), l2: v.slice(2), l2b: v.slice(0, 2) }; const gs = presetGroups('lao'); gs.forEach(g => g.numbers = [m[g.id]]); S.edit.groups = gs; A.renderEdit();
+  },
+  saveEdit() {
+    const e = S.edit, lot = S.lottery;
+    const res = { lottery: lot, date: e.date || new Date().toLocaleDateString('th-TH'), id: 'manual-' + Date.now(), groups: e.groups, source: 'manual' };
+    S.mres[lot] = [res, ...(S.mres[lot] || [])].slice(0, 120); LS.set('mres', S.mres);
+    S.useManual = true; S.lastCheck = null; delete S.demo[lot]; closeModal(); toast('บันทึกผลรางวัลแล้ว'); render();
+  },
+  useDemo() { S.demo[S.lottery] = demoResult(S.lottery); S.lastCheck = null; closeModal(); render(); toast('โหมดข้อมูลตัวอย่าง — ไม่ใช่ผลรางวัลจริง') },
+  exitDemo() { delete S.demo[S.lottery]; S.lastCheck = null; render() },
+  demoTicket() { S.tickets = [{ v: DEMO_HINT[S.lottery], src: 'manual', ok: true }]; S.lastCheck = null; render() },
+  shareResult() {
+    const r = curResult(); if (!r) return toast('ยังไม่มีผลรางวัลให้แชร์');
+    if (r.source === 'demo') return toast('ข้อมูลตัวอย่างแชร์ไม่ได้ — ไม่ใช่ผลรางวัลจริง');
+    S.shareRes = r; openShare('แชร์ผลรางวัล', resultText(r), true);
+  },
+  invite() { S.shareRes = null; openShare('ชวนเพื่อนใช้ LottoSnap', inviteText(), false) },
+  shLine() { window.open('https://line.me/R/msg/text/?' + encodeURIComponent(S.share.text), '_blank', 'noopener') },
+  async shFb() {
+    const ok = await clip(S.share.text), u = appUrl();
+    window.open(u ? 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u) : 'https://www.facebook.com/', '_blank', 'noopener');
+    toast(ok ? 'คัดลอกข้อความแล้ว — วางในช่องโพสต์ Facebook ได้เลย' : 'เปิด Facebook แล้ว (คัดลอกอัตโนมัติไม่ได้ กรุณาคัดลอกข้อความเอง)');
+  },
+  async shCopy() { toast(await clip(S.share.text) ? 'คัดลอกแล้ว' : 'คัดลอกไม่ได้ ลองเลือกข้อความเอง') },
+  async shNative() { try { await navigator.share({ text: S.share.text }) } catch (e) { } },
+  async shImage() {
+    const r = S.shareRes; if (!r) return;
+    const cv = await makeCard(r), blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+    const file = new File([blob], 'lottosnap-result.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], text: S.share.text }); return } catch (e) { if (e.name === 'AbortError') return } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lottosnap-result.png'; a.click();
+    toast('บันทึกภาพแล้ว — นำไปโพสต์ใน LINE / Facebook ได้เลย');
+  },
+  setShareUrl(v) { v = (v || '').trim(); if (v && !/^https?:\/\//.test(v)) return toast('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://'); S.set.shareUrl = v; saveSet(); toast('บันทึกลิงก์แล้ว') },
+  /* settings / profile / notifs */
+  setTheme(v) { S.set.theme = v; saveSet(); render() },
+  setScale(v) { S.set.scale = +v; saveSet(); applyTheme() },
+  toggle(k) { S.set[k] = !S.set[k]; saveSet(); render() },
+  statDay(d) { S.statDay = d; render() },
+  delCheck(i) { if (i < 0 || !confirm('ลบรายการตรวจนี้?')) return; S.checks.splice(i, 1); LS.set('checks', S.checks); render(); toast('ลบแล้ว') },
+  clearChecks() { if (!confirm('ลบประวัติการตรวจทั้งหมด?')) return; S.checks = []; LS.set('checks', S.checks); render(); toast('ลบแล้ว') },
+  delRes(i) {
+    const lot = S.lottery, l = S.mres[lot] || []; if (i < 0 || !l[i] || !confirm('ลบผลงวด ' + l[i].date + ' ออกจากเครื่อง? (ผลที่ดึงจากเว็บ/บอทจะไม่ถูกดึงกลับมาอีก)')) return;
+    const [x] = l.splice(i, 1); S.del[lot] = [...new Set([...(S.del[lot] || []), x.date])]; LS.set('mresDel', S.del); LS.set('mres', S.mres); S.lastCheck = null; render(); toast('ลบแล้ว');
+  },
+  clearRes() {
+    const lot = S.lottery, l = S.mres[lot] || []; if (!l.length || !confirm('ลบผลที่บันทึกของ' + LOTTO[lot].name + 'ทั้งหมด ' + l.length + ' งวด?')) return;
+    S.del[lot] = [...new Set([...(S.del[lot] || []), ...l.map(r => r.date)])]; LS.set('mresDel', S.del); S.mres[lot] = []; LS.set('mres', S.mres); S.lastCheck = null; render(); toast('ลบแล้ว');
+  },
+  toggleWeb() { S.set.web = S.set.web === false; saveSet(); render(); if (S.set.web !== false) loadOther(S.lottery) },
+  setProxy(v) { S.set.proxy = (v || '').trim(); saveSet(); toast('บันทึกพร็อกซีแล้ว'); render() },
+  setBirthDay(v) { S.set.birthDay = v === '' ? null : +v; saveSet(); render() },
+  dreamGo() { S.dreamQ = ($('#dq').value || '').trim(); render() },
+  dreamAdd() {
+    const k = ($('#dk').value || '').trim(), m = ($('#dm').value || '').trim(), n = ($('#dn').value.match(/\d+/g) || []);
+    if (!k || !n.length) return toast('ใส่คำและเลขอย่างน้อย 1 ชุด');
+    const l = LS.get('dreams', []); l.unshift({ k: [k], m: m || 'ความหมายที่ฉันเพิ่มเอง', n }); LS.set('dreams', l.slice(0, 100)); S.dreamQ = k; toast('บันทึกแล้ว'); render();
+  },
+  async toggleLucky() {
+    S.set.luckyRemind = !S.set.luckyRemind;
+    if (S.set.luckyRemind) { try { if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission() } catch (e) { } }
+    saveSet(); render();
+  },
+  setLuckyTime(v) { S.set.luckyTime = v || '07:00'; saveSet(); render() },
+  async toggleRemind() {
+    S.set.remind = !S.set.remind;
+    if (S.set.remind) {
+      try { if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission() } catch (e) { }
+      toast('เปิดเตือนแล้ว — ต้องเปิดแอปค้างไว้จึงจะเตือน'); setTimeout(remindTick, 500);
+    }
+    saveSet(); render();
+  },
+  setLead(v) { S.set.lead = Math.min(120, Math.max(1, +v || 15)); saveSet(); render() },
+  setSched(lot, patch) { S.set.sched = S.set.sched || {}; S.set.sched[lot] = Object.assign({}, sched(lot), patch); saveSet(); render() },
+  togDay(lot, d) { const c = sched(lot), s = new Set(c.days || []); s.has(d) ? s.delete(d) : s.add(d); A.setSched(lot, { days: [...s].sort() }) },
+  testRemind() { const t = '⏰ ทดสอบการเตือน', b = 'ถ้าเห็นข้อความนี้ การเตือนในแอปทำงานปกติ'; addNotif(t, b); toast(t); try { if ('Notification' in window && Notification.permission === 'granted') new Notification(t, { body: b }) } catch (e) { } },
+  setApi(v) { S.set.api = (v || DEFAULT_API).trim(); saveSet(); S.draw = null; S.listCache = []; S.listPage = 0; S.listEnd = false; S.listMode = null; S.stats = null; render(); toast('บันทึกแหล่งข้อมูลแล้ว') },
+  setName(v) { S.profile.name = v; LS.set('profile', S.profile); toast('บันทึกชื่อแล้ว') },
+  setAvatar(e) { S.profile.avatar = e; S.profile.img = null; LS.set('profile', S.profile); render() },
+  avatarFile(f) {
+    if (!f) return; const img = new Image();
+    img.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 160; const x = c.getContext('2d'), s = Math.min(img.width, img.height); x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 160, 160); S.profile.img = c.toDataURL('image/jpeg', .8); LS.set('profile', S.profile); render() };
+    img.src = URL.createObjectURL(f);
+  },
+  readAll() { S.notifs.forEach(n => n.read = true); LS.set('notifs', S.notifs); render() },
+  clearNotifs() { S.notifs = []; LS.set('notifs', S.notifs); render() },
+  async loadStats() {
+    S.statsBusy = true; render();
+    try {
+      while (S.listCache.length < 30 && !S.listEnd) await fetchListPage();
+      const items = S.listCache.slice(0, 30), out = []; let i = 0;
+      await Promise.all(Array.from({ length: 4 }, async () => {
+        while (i < items.length) { const k = i++, it = items[k]; try { S.drawCache[it.id] = S.drawCache[it.id] || await loadDraw(it.id); const d = S.drawCache[it.id]; if (!d.date) d.date = it.date; out[k] = d } catch (e) { } }
+      }));
+      S.stats = out.filter(Boolean); if (!S.stats.length) { S.stats = null; toast('โหลดสถิติไม่สำเร็จ') }
+    } catch (e) { toast('โหลดสถิติไม่สำเร็จ: ' + e.message) }
+    S.statsBusy = false; render();
+  },
+  wipe() { if (confirm('ลบข้อมูลทั้งหมดในเครื่อง (ประวัติ, ผลที่กรอก, โปรไฟล์, ตั้งค่า)?')) { Object.keys(localStorage).filter(k => k.startsWith('ls_')).forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); location.reload() } }
+};
+
+/* ---------- Render / Router ---------- */
+function applyTheme() {
+  const dark = S.set.theme === 'dark' || (S.set.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('dark', dark);
+  document.documentElement.style.fontSize = (16 * S.set.scale) + 'px';
+}
+const NAV = [['home', '🏠', 'หน้าแรก'], ['camera', '📷', 'กล้อง'], ['gallery', '🖼️', 'แกลเลอรี'], ['results', '✅', 'ตรวจผล'], ['history', '📊', 'ประวัติ']];
+function chrome() {
+  $('#chips').innerHTML = Object.entries(LOTTO).map(([k, l]) => `<button onclick="A.setLot('${k}')" class="chip border ${k === S.lottery ? 'bg-white text-teal-800 border-white' : 'bg-white/10 text-white border-white/30'}">${l.icon} ${l.name}</button>`).join('');
+  $('#nav > div').innerHTML = NAV.map(([v, i, n]) => `<button onclick="go('${v}')" class="py-2 ${S.view === v ? 'text-teal-600 font-bold' : 'text-slate-500'}"><div class="text-xl">${i}</div>${n}</button>`).join('');
+  const un = S.notifs.filter(n => !n.read).length, b = $('#badge'); b.textContent = un; b.classList.toggle('hidden', !un);
+  $('#avatar').innerHTML = avatarHTML();
+}
+function render() { applyTheme(); $('#view').innerHTML = (VIEWS[S.view] || VIEWS.home)(); chrome() }
+function go(v) { if (location.hash !== '#' + v) location.hash = v; else route() }
+function route() {
+  const v = (location.hash || '#home').slice(1);
+  if (S.view === 'camera' && v !== 'camera') Cam.stop(true);
+  S.view = VIEWS[v] ? v : 'home';
+  if (S.view === 'notifs') setTimeout(() => { }, 0);
+  render(); window.scrollTo(0, 0);
+}
+addEventListener('hashchange', route);
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (S.set.theme === 'auto') applyTheme() });
+addEventListener('pagehide', () => Cam.stop(true));
+
+/* ---------- Boot ---------- */
+(function boot() {
+  route();
+  if (!LS.get('agreed', false)) {
+    openModal(`<div class="flex justify-center mb-1"><svg class="w-16 h-16 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LottoSnap"><defs><linearGradient id="wbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient><linearGradient id="wgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#wbg)"/><!-- viewfinder corners (snap) --><g fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity=".95"><path d="M104 168V132a28 28 0 0 1 28-28H168"/><path d="M344 104H380a28 28 0 0 1 28 28V168"/><path d="M408 344V380a28 28 0 0 1-28 28H344"/><path d="M168 408H132a28 28 0 0 1-28-28V344"/></g><!-- ticket with side notches --><g transform="rotate(-6 256 256)"><path fill="#fff" d="M166 186H346a16 16 0 0 1 16 16V236a20 20 0 0 0 0 40V310a16 16 0 0 1-16 16H166a16 16 0 0 1-16-16V276a20 20 0 0 0 0-40V202a16 16 0 0 1 16-16Z"/><g fill="#0f766e"><circle cx="190" cy="222" r="9"/><circle cx="218" cy="222" r="9"/><circle cx="246" cy="222" r="9"/><circle cx="274" cy="222" r="9"/><circle cx="302" cy="222" r="9"/><circle cx="330" cy="222" r="9"/></g><rect x="180" y="250" width="152" height="10" rx="5" fill="#99f6e4"/><rect x="180" y="274" width="104" height="10" rx="5" fill="#99f6e4"/></g><!-- check badge (result) --><circle cx="336" cy="322" r="52" fill="url(#wgold)" stroke="#fff" stroke-width="10"/><path d="M312 322l18 18 32-38" fill="none" stroke="#0f766e" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="font-bold text-lg text-center mb-2">ยินดีต้อนรับสู่ LottoSnap</div>
+      <div class="text-sm leading-relaxed">แอปนี้ <b>ฟรี</b> และใช้ <b>ตรวจผลรางวัลเท่านั้น</b> ไม่มีการซื้อขายสลากหรือการพนันใด ๆ ข้อมูลอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการเสมอ และตรวจเลขที่สแกนได้ให้ตรงกับสลากก่อนกดตรวจ</div>
+      <button class="${BP} w-full mt-4" onclick="LS.set('agreed',true);closeModal();addNotif('ยินดีต้อนรับ 👋','เริ่มจากถ่ายภาพสลาก อัปโหลดรูป หรือกรอกเลขได้เลย')">ฉันเข้าใจและยอมรับ</button>`, false);
+  }
+  if (S.lottery === 'thai') loadHome(); else loadOther(S.lottery);
+})();
+</script>
+</body>
+</html>
