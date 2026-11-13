@@ -86,16 +86,20 @@ const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.rem
 const LOTTO = {
   thai:   { name: 'หวยรัฐบาลไทย', icon: '🇹🇭', len: [6], max: 6 },
   gsb:    { name: 'ออมทรัพย์ ธ.ก.ส.', icon: '🏦', len: [7, 6], max: 10 },
-  lao:    { name: 'หวยลาว', icon: '🇱🇦', len: [4], max: 4 },
-  hanoi:  { name: 'หวยฮานอย', icon: '🇻🇳', len: [5, 4], max: 5 },
+  lao:    { name: 'หวยลาว', icon: '🇱🇦', len: [6, 4, 3, 2], max: 6 },
+  hanoi:  { name: 'หวยฮานอย', short: 'ปกติ (XSMB ทางการ)', icon: '🇻🇳', len: [5, 4], max: 5 },
+  hanoi_sp:  { name: 'ฮานอยพิเศษ', short: 'พิเศษ', sub: 'hanoi', icon: '🇻🇳', len: [4, 3, 2], max: 4 },
+  hanoi_vip: { name: 'ฮานอย VIP', short: 'VIP', sub: 'hanoi', icon: '🇻🇳', len: [4, 3, 2], max: 4 },
+  hanoi_ex:  { name: 'ฮานอยเฉพาะกิจ', short: 'เฉพาะกิจ', sub: 'hanoi', icon: '🇻🇳', len: [4, 3, 2], max: 4 },
 };
 const G = (id, name, match, reward = 0, numbers = []) => ({ id, name, match, reward, numbers });
 function presetGroups(lot) {
   switch (lot) {
     case 'thai': return [G('prizeFirst', 'รางวัลที่ 1', 'full', 6000000), G('prizeFirstNear', 'ข้างเคียงรางวัลที่ 1', 'full', 100000), G('prizeSecond', 'รางวัลที่ 2', 'full', 200000), G('prizeThird', 'รางวัลที่ 3', 'full', 80000), G('prizeForth', 'รางวัลที่ 4', 'full', 40000), G('prizeFifth', 'รางวัลที่ 5', 'full', 20000), G('runningNumberFrontThree', 'เลขหน้า 3 ตัว', 'first', 4000), G('runningNumberBackThree', 'เลขท้าย 3 ตัว', 'last', 4000), G('runningNumberBackTwo', 'เลขท้าย 2 ตัว', 'last', 2000)];
     case 'gsb': return [G('g1', 'รางวัลที่ 1', 'full'), G('g3', 'เลขท้าย 3 ตัว', 'last'), G('g2', 'เลขท้าย 2 ตัว', 'last')];
-    case 'lao': return [G('l4', '4 ตัวตรง', 'full'), G('l3', '3 ตัวบน', 'last'), G('l2', '2 ตัวบน', 'last'), G('l2b', '2 ตัวล่าง', 'first')];
+    case 'lao': return [G('l6', 'เลข 6 ตัว', 'full'), G('l4', 'เลขท้าย 4 ตัว', 'last'), G('l3', 'เลขท้าย 3 ตัว (3 ตัวบน)', 'last'), G('l2', 'เลขท้าย 2 ตัว (2 ตัวบน)', 'last'), G('l2b', '2 ตัวล่าง', 'full')];
     case 'hanoi': return [G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
+    case 'hanoi_sp': case 'hanoi_vip': case 'hanoi_ex': return [G('h4', 'เลข 4 ตัว', 'full'), G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
   }
   return [];
 }
@@ -104,10 +108,13 @@ function seeded(n, len, seed) { const out = []; let x = seed; while (out.length 
 const DEMO_NUM = {
   thai: { prizeFirst: ['123456'], prizeFirstNear: ['123455', '123457'], prizeSecond: seeded(5, 6, 11), prizeThird: seeded(10, 6, 22), prizeForth: seeded(50, 6, 33), prizeFifth: seeded(100, 6, 44), runningNumberFrontThree: ['123', '789'], runningNumberBackThree: ['456', '012'], runningNumberBackTwo: ['56'] },
   gsb: { g1: ['1234567'], g3: ['567'], g2: ['67'] },
-  lao: { l4: ['4036'], l3: ['036'], l2: ['36'], l2b: ['40'] },
+  lao: { l6: ['184036'], l4: ['4036'], l3: ['036'], l2: ['36'], l2b: ['40'] },
   hanoi: { h3: ['345'], h2: ['45'], h2b: ['90'] },
+  hanoi_sp: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
+  hanoi_vip: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
+  hanoi_ex: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
 };
-const DEMO_HINT = { thai: '123456', gsb: '1234567', lao: '4036', hanoi: '12345' };
+const DEMO_HINT = { thai: '123456', gsb: '1234567', lao: '184036', hanoi: '12345', hanoi_sp: '1234', hanoi_vip: '1234', hanoi_ex: '1234' };
 function demoResult(lot) {
   const groups = presetGroups(lot).map(g => Object.assign({}, g, { numbers: (DEMO_NUM[lot] || {})[g.id] || [] }));
   return { lottery: lot, date: 'ตัวอย่าง (เดโม)', id: 'demo', groups, source: 'demo' };
@@ -261,7 +268,7 @@ const mkHanoi = w => {   // w = 27 เลขตามลำดับ ĐB, G1, G2
   return [G('h3', '3 ตัวบน', 'last', 0, [w[0].slice(-3)]), G('h2', '2 ตัวบน', 'last', 0, [w[0].slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [w[1].slice(-2)]),
     ...cut.map(([a, b, n], i) => G('v_' + i, 'ทางการ · ' + n, 'last', 0, w.slice(a, b)))];
 };
-const mkLao = n4 => [G('l4', '4 ตัวตรง', 'full', 0, [n4]), G('l3', '3 ตัวบน', 'last', 0, [n4.slice(1)]), G('l2', '2 ตัวบน', 'last', 0, [n4.slice(2)]), G('l2b', '2 ตัวล่าง', 'first', 0, [n4.slice(0, 2)])];
+const mkLao = (n4, n6) => [...(n6 ? [G('l6', 'เลข 6 ตัว', 'full', 0, [n6])] : []), G('l4', 'เลขท้าย 4 ตัว', 'last', 0, [n4]), G('l3', 'เลขท้าย 3 ตัว (3 ตัวบน)', 'last', 0, [n4.slice(1)]), G('l2', 'เลขท้าย 2 ตัว (2 ตัวบน)', 'last', 0, [n4.slice(2)]), G('l2b', '2 ตัวล่าง', 'full', 0, [n4.slice(0, 2)])];
 const XS_LEN = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2];
 function parseXSMB(t) {
   const toks = webTokens(t); let w = winFind(toks, XS_LEN);
@@ -273,22 +280,32 @@ function parseLao6(t) {   // หวยลาวพัฒนา: เลข 6 ห�
   const toks = webTokens(t);
   for (let i = 0; i + 4 <= toks.length; i++) {
     const [a, b, c, d] = toks.slice(i, i + 4);
-    if (a.length === 6 && b.length === 4 && c.length === 3 && d.length === 2 && a.endsWith(b) && b.endsWith(c) && c.endsWith(d)) return mkLao(b);
+    if (a.length === 6 && b.length === 4 && c.length === 3 && d.length === 2 && a.endsWith(b) && b.endsWith(c) && c.endsWith(d)) return mkLao(b, a);
   }
   throw new Error('ยังไม่พบผลหวยลาว (เลข 6 หลักพร้อมท้าย 4/3/2 ตัว) — อาจยังไม่ออกผล');
 }
-function parseGSB(t) {
-  const L = { first: /รางวัลที่\s*1(?!\d)/g, last4: /ท้าย\s*4\s*ตัว/g, last3: /ท้าย\s*3\s*ตัว/g, last2: /ท้าย\s*2\s*ตัว/g, skip: /ดิจิทัล|ดิจิตอล|digital/gi }, LEN = { first: 7, last4: 4, last3: 3, last2: 2 };
+function parseGSB(t) {   // หน้า ธ.ก.ส. จริงวางตัวเลข "ก่อน" ป้ายรางวัล (เช่น "9221612 รางวัลที่ 1") — รองรับทั้งเลขก่อนป้ายและเลขหลังป้าย
+  const L = { first: /รางวัลที่\s*1(?!\d)/g, last4: /(?:รางวัล)?(?:เลข)?ท้าย\s*4\s*ตัว/g, last3: /(?:รางวัล)?(?:เลข)?ท้าย\s*3\s*ตัว/g, last2: /(?:รางวัล)?(?:เลข)?ท้าย\s*2\s*ตัว/g }, LEN = { first: 7, last4: 4, last3: 3, last2: 2 };
+  const SKIP = /ดิจิทัล|ดิจิตอล|digital/gi;
   const s = WEB_NOISE.reduce((x, re) => x.replace(re, ' '), t), marks = [];
-  for (const k in L) for (const m of s.matchAll(L[k])) marks.push([m.index, m.index + m[0].length, k === 'skip' ? null : k]);
-  marks.sort((a, b) => a[0] - b[0]); const got = {};
-  marks.forEach(([, end, key], i) => {
-    if (!key || got[key]) return;
-    const seg = s.slice(end, i + 1 < marks.length ? marks[i + 1][0] : s.length);
-    let toks = (seg.match(/(?<!\d)\d+(?!\d)/g) || []).filter(x => x.length === LEN[key]); if (key === 'first') toks = toks.slice(0, 1);
-    if (toks.length) got[key] = toks;
-  });
-  if (!got.first || !got.last3) throw new Error('ไม่พบรางวัลที่ 1 (7 หลัก) หรือเลขท้าย 3 ตัวตามป้ายรางวัล');
+  for (const k in L) for (const m of s.matchAll(L[k])) marks.push([m.index, m.index + m[0].length, k, /^\s*(?:\S+\s+){0,3}?(?:ดิจิทัล|ดิจิตอล|digital)/i.test(s.slice(m.index + m[0].length, m.index + m[0].length + 40))]);
+  for (const m of s.matchAll(SKIP)) marks.push([m.index, m.index + m[0].length, null, false]);
+  marks.sort((a, b) => a[0] - b[0]);
+  const run = (mode) => {
+    const got = {};
+    marks.forEach(([st, end, key, dig], i) => {
+      if (!key || dig || got[key]) return;
+      let seg;
+      if (mode === 'before') { const prev = i > 0 ? marks[i - 1][1] : 0; const m = /((?:\d+\s+)*\d+)\s*(?:รางวัล|เลข)*\s*$/.exec(s.slice(prev, st)); seg = m ? m[1] : '' }
+      else seg = s.slice(end, i + 1 < marks.length ? marks[i + 1][0] : s.length);
+      let toks = (seg.match(/(?<!\d)\d+(?!\d)/g) || []).filter(x => x.length === LEN[key]);
+      if (key === 'first') toks = mode === 'before' ? toks.slice(-1) : toks.slice(0, 1);
+      if (toks.length) got[key] = toks;
+    });
+    return got.first && got.last3 ? got : null;
+  };
+  const got = run('before') || run('after');
+  if (!got) throw new Error('ไม่พบรางวัลที่ 1 (7 หลัก) หรือเลขท้าย 3 ตัวตามป้ายรางวัล');
   const out = [G('g1', 'รางวัลที่ 1', 'full', 0, got.first)];
   if (got.last4) out.push(G('g4', 'เลขท้าย 4 ตัว', 'last', 0, got.last4));
   out.push(G('g3', 'เลขท้าย 3 ตัว', 'last', 0, got.last3));
@@ -476,6 +493,9 @@ const SCHED_DEF = {
   gsb:  { time: '10:00', dates: '16' },
   lao:  { time: '20:30', days: [1, 3, 5] },
   hanoi: { time: '18:15', days: [0, 1, 2, 3, 4, 5, 6] },
+  hanoi_sp: { time: '17:00', days: [0, 1, 2, 3, 4, 5, 6] },
+  hanoi_vip: { time: '17:00', days: [0, 1, 2, 3, 4, 5, 6] },
+  hanoi_ex: { time: '17:00', days: [0, 1, 2, 3, 4, 5, 6] },
 };
 const sched = lot => Object.assign({ on: false }, SCHED_DEF[lot], (S.set.sched || {})[lot] || {});
 function ictNow() { const d = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000); return d }  // นาฬิกาไทย ไม่ขึ้นกับโซนของเครื่อง
@@ -1096,7 +1116,7 @@ const A = {
     openModal(`<div class="flex justify-between items-center mb-2"><div class="font-bold">✍️ กรอกผลรางวัล — ${LOTTO[S.lottery].name}</div><button onclick="closeModal()" class="text-xl">✕</button></div>
       <div class="text-xs text-slate-500 mb-2">กรอกตามประกาศอย่างเป็นทางการ แยกหลายเลขด้วยเว้นวรรคหรือจุลภาค · ผลจะถูกบันทึกในเครื่อง</div>
       <input class="${INP} mb-2" placeholder="งวด/วันที่ (เช่น 16 พ.ย. 2569 หรือ รอบ 12:00)" value="${esc(e.date)}" oninput="S.edit.date=this.value">
-      ${S.lottery === 'lao' ? `<div class="flex gap-2 mb-2"><input id="lao4" class="${INP} font-mono" inputmode="numeric" maxlength="4" placeholder="เลขลาว 4 หลัก"><button class="${BS}" onclick="A.laoDerive()">สร้างอัตโนมัติ</button></div>` : ''}
+      ${S.lottery === 'lao' ? `<div class="flex gap-2 mb-2"><input id="lao4" class="${INP} font-mono" inputmode="numeric" maxlength="6" placeholder="เลขลาว 6 หลัก (หรือ 4 หลักท้าย)"><button class="${BS}" onclick="A.laoDerive()">สร้างอัตโนมัติ</button></div>` : ''}
       <div class="space-y-2">${e.groups.map((g, i) => `<div class="rounded-xl border border-slate-200 dark:border-slate-700 p-2 space-y-1">
         <div class="flex gap-2"><input class="${INP} !py-1 text-sm" value="${esc(g.name)}" oninput="S.edit.groups[${i}].name=this.value"><button class="text-rose-500 px-1" onclick="A.egDel(${i})">✕</button></div>
         <div class="flex gap-2"><select class="${INP} !py-1 text-sm" onchange="S.edit.groups[${i}].match=this.value">${Object.entries(MATCH_LABEL).map(([k, v]) => `<option value="${k}" ${g.match === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
@@ -1107,8 +1127,8 @@ const A = {
   egAdd() { S.edit.groups.push(G('c' + Date.now(), 'รางวัลใหม่', 'full')); A.renderEdit() },
   egDel(i) { S.edit.groups.splice(i, 1); A.renderEdit() },
   laoDerive() {
-    const v = ($('#lao4').value || '').replace(/\D/g, ''); if (v.length !== 4) return toast('ใส่เลข 4 หลัก');
-    const m = { l4: v, l3: v.slice(1), l2: v.slice(2), l2b: v.slice(0, 2) }; const gs = presetGroups('lao'); gs.forEach(g => g.numbers = [m[g.id]]); S.edit.groups = gs; A.renderEdit();
+    const v = ($('#lao4').value || '').replace(/\D/g, ''); if (v.length !== 4 && v.length !== 6) return toast('ใส่เลข 6 หลัก (หรือ 4 หลักท้าย)');
+    S.edit.groups = mkLao(v.slice(-4), v.length === 6 ? v : null); A.renderEdit();
   },
   saveEdit() {
     const e = S.edit, lot = S.lottery;
@@ -1217,7 +1237,9 @@ function applyTheme() {
 }
 const NAV = [['home', '🏠', 'หน้าแรก'], ['camera', '📷', 'กล้อง'], ['gallery', '🖼️', 'แกลเลอรี'], ['results', '✅', 'ตรวจผล'], ['history', '📊', 'ประวัติ']];
 function chrome() {
-  $('#chips').innerHTML = Object.entries(LOTTO).map(([k, l]) => `<button onclick="A.setLot('${k}')" class="chip border ${k === S.lottery ? 'bg-white text-teal-800 border-white' : 'bg-white/10 text-white border-white/30'}">${l.icon} ${l.name}</button>`).join('');
+  const fam = (LOTTO[S.lottery] || {}).sub || S.lottery, chip = (k, l, label) => `<button onclick="A.setLot('${k}')" class="chip border shrink-0 ${k === S.lottery ? 'bg-white text-teal-800 border-white' : 'bg-white/10 text-white border-white/30'}">${label}</button>`;
+  const subs = Object.entries(LOTTO).filter(([k, l]) => k === fam || l.sub === fam);
+  $('#chips').innerHTML = `<div class="flex gap-2">${Object.entries(LOTTO).filter(([k, l]) => !l.sub).map(([k, l]) => chip(k, l, l.icon + ' ' + l.name).replace(k === fam && k !== S.lottery ? 'bg-white/10 text-white border-white/30' : '\u0000', 'bg-white/30 text-white border-white')).join('')}</div>` + (subs.length > 1 ? `<div class="flex gap-2 ml-3 pl-3 border-l border-white/40 items-center"><span class="text-[11px] text-white/80 shrink-0">รอบ:</span>${subs.map(([k, l]) => chip(k, l, l.short || l.name)).join('')}</div>` : '');
   $('#nav > div').innerHTML = NAV.map(([v, i, n]) => `<button onclick="go('${v}')" class="py-2 ${S.view === v ? 'text-teal-600 font-bold' : 'text-slate-500'}"><div class="text-xl">${i}</div>${n}</button>`).join('');
   const un = S.notifs.filter(n => !n.read).length, b = $('#badge'); b.textContent = un; b.classList.toggle('hidden', !un);
   $('#avatar').innerHTML = avatarHTML();
