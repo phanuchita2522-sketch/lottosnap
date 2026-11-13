@@ -33,7 +33,7 @@
         <button onclick="go('profile')" id="avatar" class="w-9 h-9 rounded-full bg-white/20 overflow-hidden flex items-center justify-center text-xl" aria-label="โปรไฟล์"></button>
       </div>
     </div>
-    <div id="chips" class="flex gap-2 overflow-x-auto pt-2 sb-hide"></div>
+    <div id="chips" class="pt-2"></div>
   </div>
 </header>
 
@@ -1237,9 +1237,10 @@ function applyTheme() {
 }
 const NAV = [['home', '🏠', 'หน้าแรก'], ['camera', '📷', 'กล้อง'], ['gallery', '🖼️', 'แกลเลอรี'], ['results', '✅', 'ตรวจผล'], ['history', '📊', 'ประวัติ']];
 function chrome() {
-  const fam = (LOTTO[S.lottery] || {}).sub || S.lottery, chip = (k, l, label) => `<button onclick="A.setLot('${k}')" class="chip border shrink-0 ${k === S.lottery ? 'bg-white text-teal-800 border-white' : 'bg-white/10 text-white border-white/30'}">${label}</button>`;
-  const subs = Object.entries(LOTTO).filter(([k, l]) => k === fam || l.sub === fam);
-  $('#chips').innerHTML = `<div class="flex gap-2">${Object.entries(LOTTO).filter(([k, l]) => !l.sub).map(([k, l]) => chip(k, l, l.icon + ' ' + l.name).replace(k === fam && k !== S.lottery ? 'bg-white/10 text-white border-white/30' : '\u0000', 'bg-white/30 text-white border-white')).join('')}</div>` + (subs.length > 1 ? `<div class="flex gap-2 ml-3 pl-3 border-l border-white/40 items-center"><span class="text-[11px] text-white/80 shrink-0">รอบ:</span>${subs.map(([k, l]) => chip(k, l, l.short || l.name)).join('')}</div>` : '');
+  const fam = (LOTTO[S.lottery] || {}).sub || S.lottery, chip = (k, label, on) => `<button onclick="A.setLot('${k}')" class="chip border shrink-0 ${on ? 'bg-white text-teal-800 border-white' : 'bg-white/10 text-white border-white/30'}">${label}</button>`;
+  const SUBORDER = ['hanoi_ex', 'hanoi_sp', 'hanoi', 'hanoi_vip'], subs = fam === 'hanoi' ? SUBORDER : [];
+  $('#chips').innerHTML = `<div class="flex gap-2 overflow-x-auto sb-hide">${Object.entries(LOTTO).filter(([k, l]) => !l.sub).map(([k, l]) => chip(k, l.icon + ' ' + l.name, k === fam)).join('')}</div>`
+    + (subs.length ? `<div class="mt-2 rounded-xl bg-white/10 p-2"><div class="text-[11px] text-white/80 mb-1">เลือกประเภทหวยฮานอยที่จะตรวจ</div><div class="flex flex-wrap gap-2">${subs.map(k => chip(k, k === 'hanoi' ? 'หวยฮานอยปกติ' : LOTTO[k].name.replace('ฮานอย', 'หวยฮานอย'), k === S.lottery)).join('')}</div></div>` : '');
   $('#nav > div').innerHTML = NAV.map(([v, i, n]) => `<button onclick="go('${v}')" class="py-2 ${S.view === v ? 'text-teal-600 font-bold' : 'text-slate-500'}"><div class="text-xl">${i}</div>${n}</button>`).join('');
   const un = S.notifs.filter(n => !n.read).length, b = $('#badge'); b.textContent = un; b.classList.toggle('hidden', !un);
   $('#avatar').innerHTML = avatarHTML();
