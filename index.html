@@ -88,7 +88,6 @@ const LOTTO = {
   gsb:    { name: 'ออมทรัพย์ ธ.ก.ส.', icon: '🏦', len: [7, 6], max: 10 },
   lao:    { name: 'หวยลาว', icon: '🇱🇦', len: [4], max: 4 },
   hanoi:  { name: 'หวยฮานอย', icon: '🇻🇳', len: [5, 4], max: 5 },
-  my:     { name: 'หวยมาเลย์', icon: '🇲🇾', len: [4], max: 4 },
 };
 const G = (id, name, match, reward = 0, numbers = []) => ({ id, name, match, reward, numbers });
 function presetGroups(lot) {
@@ -97,7 +96,6 @@ function presetGroups(lot) {
     case 'gsb': return [G('g1', 'รางวัลที่ 1', 'full'), G('g3', 'เลขท้าย 3 ตัว', 'last'), G('g2', 'เลขท้าย 2 ตัว', 'last')];
     case 'lao': return [G('l4', '4 ตัวตรง', 'full'), G('l3', '3 ตัวบน', 'last'), G('l2', '2 ตัวบน', 'last'), G('l2b', '2 ตัวล่าง', 'first')];
     case 'hanoi': return [G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
-    case 'my': return [G('m1', 'รางวัลที่ 1', 'full'), G('m2', 'รางวัลที่ 2', 'full'), G('m3', 'รางวัลที่ 3', 'full'), G('ms', 'Special (10 ตัว)', 'full'), G('mc', 'Consolation (10 ตัว)', 'full')];
   }
   return [];
 }
@@ -108,9 +106,8 @@ const DEMO_NUM = {
   gsb: { g1: ['1234567'], g3: ['567'], g2: ['67'] },
   lao: { l4: ['4036'], l3: ['036'], l2: ['36'], l2b: ['40'] },
   hanoi: { h3: ['345'], h2: ['45'], h2b: ['90'] },
-  my: { m1: ['1234'], m2: ['5678'], m3: ['9012'], ms: seeded(10, 4, 55), mc: seeded(10, 4, 66) },
 };
-const DEMO_HINT = { thai: '123456', gsb: '1234567', lao: '4036', hanoi: '12345', my: '1234' };
+const DEMO_HINT = { thai: '123456', gsb: '1234567', lao: '4036', hanoi: '12345' };
 function demoResult(lot) {
   const groups = presetGroups(lot).map(g => Object.assign({}, g, { numbers: (DEMO_NUM[lot] || {})[g.id] || [] }));
   return { lottery: lot, date: 'ตัวอย่าง (เดโม)', id: 'demo', groups, source: 'demo' };
@@ -128,7 +125,7 @@ const S = {
   listCache: [], listPage: 0, listEnd: false, drawCache: {}, stats: null, statsBusy: false,
   hTab: 'stats', statDay: null, webBusy: {}, webErr: {}, del: LS.get('mresDel', {}), started: Date.now(), uid: 0, edit: null,
 };
-if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; // ค่าเก่าจากเวอร์ชันที่เคยมียี่กี
+if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; delete S.mres.my; delete S.del.my; // ค่าเก่าจากเวอร์ชันที่เคยมียี่กีและหวยมาเลย์
 const saveSet = () => LS.set('settings', S.set);
 if (/rayriffy\.com/.test(S.set.api || '')) { S.set.api = ''; saveSet() } // ย้ายค่าเก่า: โดเมนนี้เลิกให้บริการแล้ว
 
@@ -222,7 +219,7 @@ async function loadHome() {
   } catch (e) { S.drawState = 'err'; S.drawErr = e.message }
   render();
 }
-/* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{gsb|lao|hanoi|my} → {date, groups:[…]} */
+/* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{gsb|lao|hanoi} → {date, groups:[…]} */
 async function loadOtherApi(lot) {
   if (lot === 'thai' || !customApi()) return;
   try {
@@ -259,14 +256,18 @@ const WEB_NOISE = [/\d{1,2}\s*[\/\-.]\s*\d{1,2}\s*[\/\-.]\s*\d{2,4}/g, /\d{4}\s*
 const webTokens = t => WEB_NOISE.reduce((s, re) => s.replace(re, ' '), t).match(/(?<!\d)\d+(?!\d)/g)?.filter(x => x.length >= 2) || [];
 function winFind(toks, lens) { for (let i = 0; i + lens.length <= toks.length; i++) if (lens.every((n, j) => toks[i + j].length === n)) return toks.slice(i, i + lens.length); return null }
 const htmlToText = html => { const t = html.replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' '); const ta = document.createElement('textarea'); ta.innerHTML = t; return ta.value.replace(/\s+/g, ' ') };
-const mkHanoi = (db, g1) => [G('h3', '3 ตัวบน', 'last', 0, [db.slice(-3)]), G('h2', '2 ตัวบน', 'last', 0, [db.slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [g1.slice(-2)])];
+const mkHanoi = w => {   // w = 27 เลขตามลำดับ ĐB, G1, G2×2, G3×6, G4×4, G5×6, G6×3, G7×4 → แบบไทย 3 กลุ่ม + รางวัลทางการ 8 ระดับ (ตรวจแบบตรงท้ายตามความยาวของระดับนั้น)
+  const cut = [[0, 1, 'รางวัลพิเศษ'], [1, 2, 'รางวัลที่ 1'], [2, 4, 'รางวัลที่ 2'], [4, 10, 'รางวัลที่ 3'], [10, 14, 'รางวัลที่ 4'], [14, 20, 'รางวัลที่ 5'], [20, 23, 'รางวัลที่ 6'], [23, 27, 'รางวัลที่ 7']];
+  return [G('h3', '3 ตัวบน', 'last', 0, [w[0].slice(-3)]), G('h2', '2 ตัวบน', 'last', 0, [w[0].slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [w[1].slice(-2)]),
+    ...cut.map(([a, b, n], i) => G('v_' + i, 'ทางการ · ' + n, 'last', 0, w.slice(a, b)))];
+};
 const mkLao = n4 => [G('l4', '4 ตัวตรง', 'full', 0, [n4]), G('l3', '3 ตัวบน', 'last', 0, [n4.slice(1)]), G('l2', '2 ตัวบน', 'last', 0, [n4.slice(2)]), G('l2b', '2 ตัวล่าง', 'first', 0, [n4.slice(0, 2)])];
 const XS_LEN = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2];
 function parseXSMB(t) {
   const toks = webTokens(t); let w = winFind(toks, XS_LEN);
   if (!w) { w = winFind(toks, [...XS_LEN].reverse()); if (w) w.reverse() }
   if (!w) throw new Error('ยังไม่พบผล XSMB ครบ 27 ตัวตามรูปแบบ (อาจยังไม่ออกผล)');
-  return mkHanoi(w[0], w[1]);
+  return mkHanoi(w);
 }
 function parseLao6(t) {   // หวยลาวพัฒนา: เลข 6 หลัก + ท้าย 4 + ท้าย 3 + ท้าย 2 ต้องสอดคล้องกัน (ตรวจโครงสร้างซ้ำ)
   const toks = webTokens(t);
@@ -475,7 +476,6 @@ const SCHED_DEF = {
   gsb:  { time: '10:00', dates: '16' },
   lao:  { time: '20:30', days: [1, 3, 5] },
   hanoi: { time: '18:15', days: [0, 1, 2, 3, 4, 5, 6] },
-  my:   { time: '18:00', days: [3, 6, 0] },
 };
 const sched = lot => Object.assign({ on: false }, SCHED_DEF[lot], (S.set.sched || {})[lot] || {});
 function ictNow() { const d = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000); return d }  // นาฬิกาไทย ไม่ขึ้นกับโซนของเครื่อง
@@ -759,6 +759,10 @@ function heroCard(r) {
   if (th) {
     inner = `<div class="text-xs opacity-80">รางวัลที่ 1</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'prizeFirst').numbers[0])}</div>
       <div class="grid grid-cols-3 gap-2 mt-3">${[['runningNumberFrontThree', 'เลขหน้า 3 ตัว'], ['runningNumberBackThree', 'เลขท้าย 3 ตัว'], ['runningNumberBackTwo', 'เลขท้าย 2 ตัว']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>`;
+  } else if (r.lottery === 'hanoi' && grp(r, 'v_0').numbers.length) {
+    inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'v_0').numbers[0])}</div>
+      <div class="grid grid-cols-3 gap-2 mt-3">${[['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>
+      <div class="text-[11px] opacity-80 mt-2">รางวัลที่ 1–7 ทั้งหมด กด "ดูผลทั้งหมด"</div>`;
   } else {
     inner = `<div class="grid grid-cols-2 gap-2">${r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => `<div class="bg-white/15 rounded-xl p-2"><div class="text-[11px] opacity-80">${esc(g.name)}</div><div class="font-mono font-bold break-all">${esc(g.numbers.slice(0, 4).join(' '))}</div></div>`).join('') || '<div class="text-sm opacity-80 col-span-2">ยังไม่ได้กรอกเลขรางวัล</div>'}</div>`;
   }
@@ -870,8 +874,7 @@ const VIEWS = {
       <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🌐 ดึงผลจากเว็บโดยตรง</div><div class="text-xs text-slate-500">ฮานอย (xosominhngoc.com) · ลาว (lottery.kapook.com) · ธ.ก.ส. (baac.or.th)</div></div>${tg('web', S.set.web !== false).replace("A.toggle('web')", 'A.toggleWeb()')}</div>
         <div class="text-xs text-slate-500 leading-relaxed">เบราว์เซอร์อ่านเว็บอื่นตรง ๆ ไม่ได้ จึงต้องผ่านพร็อกซี — ทางที่เสถียรคือพร็อกซีของคุณเอง (Cloudflare Worker ฟรี ดู cf-worker.js ในชุดบอท) ใส่ URL ตามรูปแบบ <code>https://ชื่อคุณ.workers.dev/?url={url}</code></div>
         <input class="${INP} text-sm" value="${esc(S.set.proxy || '')}" onchange="A.setProxy(this.value)" placeholder="https://ชื่อคุณ.workers.dev/?url={url}">
-        <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label>
-        <div class="text-[11px] text-slate-500">หวยมาเลย์: ยังไม่มีเว็บที่ดึงผ่านแอปได้ (เว็บผู้ให้บริการสร้างผลด้วย JavaScript) — กรอกเอง หรือใช้บอท</div></div>
+        <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label></div>
       <div class="${CARD} space-y-2"><div class="font-semibold text-sm">แหล่งข้อมูลหวยไทย (API)</div><input class="${INP} text-sm" value="${esc(S.set.api)}" onchange="A.setApi(this.value)" placeholder="เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว">
         <div class="text-xs text-slate-500">เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว (หวยไทยย้อนหลังทุกงวด) · ถ้ามีบอทของคุณเอง ใส่ URL ที่มี /latest /list/{หน้า} /lotto/{id} และ /other/{ชนิดหวย} สำหรับหวยอีก 4 ชนิด</div><div class="flex gap-2"><button class="${BS}" onclick="A.setApi('')">ใช้ชุดข้อมูลในตัว</button><button class="${BP}" onclick="S.lottery='thai';loadHome()">ทดสอบ/โหลดใหม่</button></div></div>
       <div class="${CARD} space-y-2"><div class="font-semibold text-sm">ลิงก์แอป (สำหรับแชร์/ชวนเพื่อน)</div><input class="${INP} text-sm" value="${esc(S.set.shareUrl || '')}" onchange="A.setShareUrl(this.value)" placeholder="https://ชื่อคุณ.github.io/lottosnap/"><div class="text-xs text-slate-500">ใส่ลิงก์เว็บที่คุณโฮสต์ไฟล์แอปนี้ไว้ เพื่อให้ข้อความแชร์และชวนเพื่อนแนบลิงก์ที่เพื่อนกดเข้าใช้ได้</div><button class="${BP} w-full" onclick="A.invite()">🤝 ชวนเพื่อนใช้ LottoSnap</button></div>
@@ -903,7 +906,7 @@ const VIEWS = {
     return `<div class="space-y-3">${secTitle('ℹ️ เกี่ยวกับ LottoSnap')}
       <div class="${CARD} bg-amber-50 dark:bg-amber-900/20 text-sm leading-relaxed"><b>ข้อความปฏิเสธความรับผิดชอบ</b><br>LottoSnap เป็นแอป <b>ฟรี</b> สำหรับ <b>ตรวจผลรางวัลเท่านั้น</b> ไม่มีการซื้อขายสลาก ไม่รับพนัน ไม่ทำนายผลรางวัลใด ๆ (ส่วน “สายมู” เป็นเนื้อหาเพื่อความบันเทิง ไม่มีผลต่อการออกรางวัล) ข้อมูลจาก API/การอ่านภาพอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการของผู้ออกสลากทุกครั้งก่อนดำเนินการใด ๆ ผู้พัฒนาไม่รับผิดชอบความเสียหายจากการใช้ข้อมูลในแอป สถิติย้อนหลังไม่ช่วยทำนายผลรางวัล</div>
       <div class="${CARD} text-sm space-y-2"><b>วิธีทำงาน</b><ul class="list-disc pl-5 space-y-1"><li>ถ่ายภาพ/อัปโหลดสลาก → อ่าน QR (jsQR) และตัวเลข 0-9 (Tesseract.js) โดยไม่สลับลำดับ</li><li>ทุกเลขต้องให้คุณตรวจ/แก้ไขก่อนกดตรวจผล</li><li>1 ใบถูกได้หลายรางวัลพร้อมกัน เช่น รางวัลที่ 5 + เลขท้าย 2 ตัว</li><li>ข้อมูลทั้งหมดเก็บในเครื่องของคุณ ภาพไม่ถูกอัปโหลดไปไหน (OCR ทำงานบนเบราว์เซอร์)</li></ul></div>
-      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ออมทรัพย์ ธ.ก.ส./ลาว/ฮานอย/มาเลย์: กรอกผลรางวัลที่ประกาศแล้วเอง (โครงสร้างรางวัลเริ่มต้นเป็นแบบประมาณ แก้ไข/เพิ่มได้)</li></ul></div>
+      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ฮานอย: xosominhngoc.com · ลาว: lottery.kapook.com · ออมทรัพย์ ธ.ก.ส.: baac.or.th/lottery-results (ดึงผ่านบอท/พร็อกซีของคุณ หรือกรอกเองได้)</li></ul></div>
       <div class="text-xs text-center text-slate-500">LottoSnap v1.0</div></div>`;
   }
 };
