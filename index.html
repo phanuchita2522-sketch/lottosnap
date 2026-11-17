@@ -155,7 +155,8 @@ async function jget(path) { // path เริ่มด้วย "/" — ลอ�
   if (!bases().length) throw new Error('ยังไม่ได้ตั้งแหล่งข้อมูลส่วนตัว');
   for (const b of bases()) {
     const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
-    try { const r = await fetch(b + path, { cache: 'no-store', signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json() }
+    try { const r = await fetch(b + path + (path.includes('?') ? '&' : '?') + '_=' + Date.now(), { cache: 'no-store', signal: ctl.signal });   // ?_= กันแคช CDN ของ GitHub Pages (ค้างได้ ~10 นาที)
+      if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json() }
     catch (e) { err = e } finally { clearTimeout(t) }
   }
   throw new Error(netErr(err));
@@ -770,8 +771,8 @@ const VIEWS = {
     return `<div class="space-y-4">${hero}
       <div class="flex flex-wrap gap-2">${r ? `<button class="${BP}" onclick="go('results')">ดูผลทั้งหมด</button>` : ''}${r && r.source !== 'demo' ? `<button class="${BS}" onclick="A.shareResult()">📤 แชร์ผล</button>` : ''}<button class="${BS}" onclick="A.picker()">📅 ตรวจงวดย้อนหลัง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div>
       ${r ? `<details open><summary class="font-bold cursor-pointer mb-2">ผลรางวัลทั้งหมด — ${LOTTO[S.lottery].name} งวด ${esc(r.date || '')}</summary><div class="grid gap-2">${groupChips(r)}</div></details>` : ''}
-      <div><div class="font-bold mb-2">ทางลัด</div><div class="grid grid-cols-3 gap-2">
-        ${[['camera', '📷', 'ถ่ายภาพสลาก'], ['gallery', '🖼️', 'อัปโหลดรูป'], ['results', '⌨️', 'กรอก/พูดเลข']].map(([v, i, n]) => `<button onclick="go('${v}')" class="${CARD} !p-3 text-center active:scale-95 transition"><div class="text-3xl">${i}</div><div class="text-xs font-semibold mt-1">${n}</div></button>`).join('')}</div></div>
+      <div><div class="font-bold mb-2">ทางลัด</div><div class="grid grid-cols-4 gap-2">
+        ${[["go('camera')", '📷', 'ถ่ายภาพจากกล้อง'], ["go('gallery')", '🖼️', 'อัปโหลดรูป'], ["go('results')", '⌨️', 'กรอกตัวเลข'], ["go('results');Voice.open()", '🎤', 'ใช้เสียง']].map(([fn, i, n]) => `<button onclick="${fn}" class="${CARD} !p-2 text-center active:scale-95 transition"><div class="text-2xl">${i}</div><div class="text-[11px] font-semibold mt-1 leading-tight">${n}</div></button>`).join('')}</div></div>
       <button onclick="go('lucky')" class="${CARD} w-full flex items-center gap-3 text-left active:scale-[.99] transition"><div class="text-3xl">🔮</div><div class="flex-1"><div class="font-semibold">สายมู — เลขมงคลวันนี้ & ทำนายฝัน</div><div class="text-xs text-slate-500">เปิดดูได้ทุกวัน · เพื่อความบันเทิง</div></div><div class="text-slate-400">›</div></button>
       <div><div class="flex justify-between items-center mb-2"><div class="font-bold">ประวัติล่าสุด</div><button class="text-xs text-teal-600" onclick="go('history')">ดูทั้งหมด</button></div><div class="space-y-2">${recent}</div></div>${inviteCard()}</div>${disc()}`;
   },
@@ -868,7 +869,7 @@ const VIEWS = {
         <input class="${INP} text-sm" value="${esc(S.set.proxy || '')}" onchange="A.setProxy(this.value)" placeholder="https://ชื่อคุณ.workers.dev/?url={url}">
         <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label></div>
       <div class="${CARD} space-y-2"><div class="font-semibold text-sm">แหล่งข้อมูลหวยไทย (API)</div><input class="${INP} text-sm" value="${esc(S.set.api)}" onchange="A.setApi(this.value)" placeholder="เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว">
-        <div class="text-xs text-slate-500">เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว (หวยไทยย้อนหลังทุกงวด) · ถ้ามีบอทของคุณเอง ใส่ URL ที่มี /latest /list/{หน้า} /lotto/{id} และ /other/{ชนิดหวย} สำหรับหวยอีก 4 ชนิด</div><div class="flex gap-2"><button class="${BS}" onclick="A.setApi('')">ใช้ชุดข้อมูลในตัว</button><button class="${BP}" onclick="S.lottery='thai';loadHome()">ทดสอบ/โหลดใหม่</button></div></div>
+        <div class="text-xs text-slate-500">เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว (หวยไทยย้อนหลังทุกงวด) · ถ้ามีบอทของคุณเอง ใส่ URL ที่มี /latest /list/{หน้า} /lotto/{id} และ /other/{ชนิดหวย} สำหรับหวยอีก 4 ชนิด</div><div id="apitest" class="text-xs"></div><div class="flex gap-2"><button class="${BS}" onclick="A.testApi()">🔎 ทดสอบการเชื่อมต่อ</button><button class="${BS}" onclick="A.setApi('')">ใช้ชุดข้อมูลในตัว</button><button class="${BP}" onclick="S.lottery='thai';loadHome()">ทดสอบ/โหลดใหม่</button></div></div>
       <div class="${CARD} space-y-2"><div class="font-semibold text-sm">ลิงก์แอป (สำหรับแชร์/ชวนเพื่อน)</div><input class="${INP} text-sm" value="${esc(S.set.shareUrl || '')}" onchange="A.setShareUrl(this.value)" placeholder="https://ชื่อคุณ.github.io/lottosnap/"><div class="text-xs text-slate-500">ใส่ลิงก์เว็บที่คุณโฮสต์ไฟล์แอปนี้ไว้ เพื่อให้ข้อความแชร์และชวนเพื่อนแนบลิงก์ที่เพื่อนกดเข้าใช้ได้</div><button class="${BP} w-full" onclick="A.invite()">🤝 ชวนเพื่อนใช้ LottoSnap</button></div>
       <div class="${CARD} space-y-2"><button class="${BS} w-full" onclick="go('about')">ℹ️ เกี่ยวกับแอป</button><button class="${BD} w-full" onclick="A.wipe()">🗑️ ลบข้อมูลทั้งหมดในเครื่อง</button></div></div>${disc()}`;
   },
@@ -1178,6 +1179,14 @@ const A = {
   setSched(lot, patch) { S.set.sched = S.set.sched || {}; S.set.sched[lot] = Object.assign({}, sched(lot), patch); saveSet(); render() },
   togDay(lot, d) { const c = sched(lot), s = new Set(c.days || []); s.has(d) ? s.delete(d) : s.add(d); A.setSched(lot, { days: [...s].sort() }) },
   testRemind() { const t = '⏰ ทดสอบการเตือน', b = 'ถ้าเห็นข้อความนี้ การเตือนในแอปทำงานปกติ'; addNotif(t, b); toast(t); try { if ('Notification' in window && Notification.permission === 'granted') new Notification(t, { body: b }) } catch (e) { } },
+  async testApi() {
+    const el = $('#apitest'); if (!customApi()) { el.textContent = 'ยังไม่ได้ตั้ง URL ของบอท — ตอนนี้ใช้ชุดข้อมูลชุมชน'; return }
+    el.textContent = 'กำลังทดสอบ…';
+    try {
+      const ix = await jget('/index.json'), lt = await jget('/latest');
+      el.innerHTML = 'เชื่อมต่อได้ ✅ ที่: <b>' + esc(customApi()) + '</b><br>/latest = ' + esc((lt.response || lt).date || '?') + ' · index: หวยไทยล่าสุด ' + esc((ix.thai || {}).latest || '?') + ' · อื่น ๆ: ' + esc(JSON.stringify(ix.others || {}));
+    } catch (e) { el.textContent = '❌ เชื่อมต่อไม่ได้: ' + e.message }
+  },
   setApi(v) { S.set.api = (v || DEFAULT_API).trim(); saveSet(); S.draw = null; S.listCache = []; S.listPage = 0; S.listEnd = false; S.listMode = null; S.stats = null; render(); toast('บันทึกแหล่งข้อมูลแล้ว') },
   setName(v) { S.profile.name = v; LS.set('profile', S.profile); toast('บันทึกชื่อแล้ว') },
   setAvatar(e) { S.profile.avatar = e; S.profile.img = null; LS.set('profile', S.profile); render() },
