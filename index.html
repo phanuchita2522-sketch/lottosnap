@@ -230,6 +230,9 @@ async function loadHome() {
   render();
 }
 /* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{lao|hanoi} → {date, groups:[…]} */
+const cleanGroups = gs => (Array.isArray(gs) ? gs : []).filter(g => g && typeof g === 'object' && Array.isArray(g.numbers)).map(g => ({
+  id: String(g.id || '').slice(0, 40), name: String(g.name || '').slice(0, 80), match: ['full', 'last', 'first'].includes(g.match) ? g.match : 'full',
+  reward: Number.isFinite(+g.reward) ? +g.reward : 0, numbers: g.numbers.map(n => String(n).replace(/\D/g, '').slice(0, 12)).filter(Boolean).slice(0, 200) })).filter(g => g.id);   // กันข้อมูลจากบอท/เว็บรูปแบบเพี้ยนทำให้หน้าจอพัง
 const okBot = (lot, groups) => lot !== 'lao' || groups.some(g => g.id === 'l6' && /^\d{6}$/.test((g.numbers || [])[0] || ''));   // ลาวรุ่นเก่าไม่มีเลข 6 หลัก ตรวจโครงสร้างไม่ได้ (เคยหยิบปี 2569 เป็นผล) → ไม่รับ
 async function loadOtherApi(lot) {
   if (lot === 'thai' || !customApi()) return;
@@ -238,20 +241,20 @@ async function loadOtherApi(lot) {
       const hs = await jget('/other/' + lot + '-history');
       if (hs && Array.isArray(hs.draws)) {
         const have = new Set((S.mres[lot] || []).map(r => r.date));
-        const add = hs.draws.filter(d => d && d.date && Array.isArray(d.groups) && okBot(lot, d.groups) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: d.groups, source: 'bot' }));
+        const add = hs.draws.filter(d => d && typeof d.date === 'string' && d.date.length < 40 && Array.isArray(d.groups) && okBot(lot, d.groups) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: cleanGroups(d.groups), source: 'bot' })).filter(r => r.groups.length);
         if (add.length) {
           S.mres[lot] = [...(S.mres[lot] || []), ...add].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
           if (S.lottery === lot) render();
         }
       }
     } catch (e) { }
-    const j = await jget('/other/' + lot);
+    const j = await jget('/other/' + lot); if (j && typeof j.date === 'string') j.date = j.date.slice(0, 40); if (j) j.groups = cleanGroups(j.groups);
     if (!j || !Array.isArray(j.groups) || !j.groups.length || !okBot(lot, j.groups) || (S.del[lot] || []).includes(j.date)) return;
     const cur = (S.mres[lot] || []).find(r => r.date === j.date) || (S.mres[lot] || [])[0];
     if (cur && (cur.date === j.date || JSON.stringify(cur.groups) === JSON.stringify(j.groups))) return;
     const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot' };
-    S.mres[lot] = [res, ...(S.mres[lot] || [])].slice(0, 120); LS.set('mres', S.mres);
-    if (S.set.notif) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + (j.date || '—'));
+    S.mres[lot] = [res, ...(S.mres[lot] || [])].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);   // เรียงตามวันที่ ไม่ให้งวดเก่าขึ้นมาอยู่หน้าสุด
+    if (S.set.notif && S.mres[lot][0] === res) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + (j.date || '—'));
     if (S.lottery === lot) { S.lastCheck = null; S.useManual = false; delete S.demo[lot]; render() }
   } catch (e) { /* ไม่มีไฟล์/ออฟไลน์ — ข้ามเงียบ ๆ */ }
 }
