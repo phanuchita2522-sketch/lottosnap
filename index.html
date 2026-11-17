@@ -85,7 +85,6 @@ const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.rem
 /* ---------- ชนิดหวย ---------- */
 const LOTTO = {
   thai:   { name: 'หวยรัฐบาลไทย', icon: '🇹🇭', len: [6], max: 6 },
-  gsb:    { name: 'ออมทรัพย์ ธ.ก.ส.', icon: '🏦', len: [7, 6], max: 10 },
   lao:    { name: 'หวยลาว', icon: '🇱🇦', len: [6, 4, 3, 2], max: 6 },
   hanoi:  { name: 'หวยฮานอย', short: 'ปกติ (XSMB ทางการ)', icon: '🇻🇳', len: [5, 4], max: 5 },
   hanoi_sp:  { name: 'ฮานอยพิเศษ', short: 'พิเศษ', sub: 'hanoi', icon: '🇻🇳', len: [4, 3, 2], max: 4 },
@@ -96,7 +95,6 @@ const G = (id, name, match, reward = 0, numbers = []) => ({ id, name, match, rew
 function presetGroups(lot) {
   switch (lot) {
     case 'thai': return [G('prizeFirst', 'รางวัลที่ 1', 'full', 6000000), G('prizeFirstNear', 'ข้างเคียงรางวัลที่ 1', 'full', 100000), G('prizeSecond', 'รางวัลที่ 2', 'full', 200000), G('prizeThird', 'รางวัลที่ 3', 'full', 80000), G('prizeForth', 'รางวัลที่ 4', 'full', 40000), G('prizeFifth', 'รางวัลที่ 5', 'full', 20000), G('runningNumberFrontThree', 'เลขหน้า 3 ตัว', 'first', 4000), G('runningNumberBackThree', 'เลขท้าย 3 ตัว', 'last', 4000), G('runningNumberBackTwo', 'เลขท้าย 2 ตัว', 'last', 2000)];
-    case 'gsb': return [G('g1', 'รางวัลที่ 1', 'full'), G('g3', 'เลขท้าย 3 ตัว', 'last'), G('g2', 'เลขท้าย 2 ตัว', 'last')];
     case 'lao': return [G('l6', 'เลข 6 ตัว', 'full'), G('l4', 'เลขท้าย 4 ตัว', 'last'), G('l3', 'เลขท้าย 3 ตัว (3 ตัวบน)', 'last'), G('l2', 'เลขท้าย 2 ตัว (2 ตัวบน)', 'last'), G('l2b', '2 ตัวล่าง', 'full')];
     case 'hanoi': return [G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
     case 'hanoi_sp': case 'hanoi_vip': case 'hanoi_ex': return [G('h4', 'เลข 4 ตัว', 'full'), G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
@@ -107,14 +105,13 @@ function presetGroups(lot) {
 function seeded(n, len, seed) { const out = []; let x = seed; while (out.length < n) { x = (Math.imul(x, 1103515245) + 12345) & 0x7fffffff; const v = String(x % Math.pow(10, len)).padStart(len, '0'); if (!out.includes(v)) out.push(v) } return out }
 const DEMO_NUM = {
   thai: { prizeFirst: ['123456'], prizeFirstNear: ['123455', '123457'], prizeSecond: seeded(5, 6, 11), prizeThird: seeded(10, 6, 22), prizeForth: seeded(50, 6, 33), prizeFifth: seeded(100, 6, 44), runningNumberFrontThree: ['123', '789'], runningNumberBackThree: ['456', '012'], runningNumberBackTwo: ['56'] },
-  gsb: { g1: ['1234567'], g3: ['567'], g2: ['67'] },
   lao: { l6: ['184036'], l4: ['4036'], l3: ['036'], l2: ['36'], l2b: ['40'] },
   hanoi: { h3: ['345'], h2: ['45'], h2b: ['90'] },
   hanoi_sp: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
   hanoi_vip: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
   hanoi_ex: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
 };
-const DEMO_HINT = { thai: '123456', gsb: '1234567', lao: '184036', hanoi: '12345', hanoi_sp: '1234', hanoi_vip: '1234', hanoi_ex: '1234' };
+const DEMO_HINT = { thai: '123456', lao: '184036', hanoi: '12345', hanoi_sp: '1234', hanoi_vip: '1234', hanoi_ex: '1234' };
 function demoResult(lot) {
   const groups = presetGroups(lot).map(g => Object.assign({}, g, { numbers: (DEMO_NUM[lot] || {})[g.id] || [] }));
   return { lottery: lot, date: 'ตัวอย่าง (เดโม)', id: 'demo', groups, source: 'demo' };
@@ -127,12 +124,12 @@ const S = {
   set: Object.assign({ theme: 'auto', pre: true, api: DEFAULT_API, notif: true, scale: 1, remind: false, lead: 15, sched: {}, web: true, publicProxy: true, proxy: '' }, LS.get('settings', {})),
   profile: Object.assign({ name: '', avatar: '🙂', img: null }, LS.get('profile', {})),
   notifs: LS.get('notifs', []), checks: LS.get('checks', []), mres: LS.get('mres', {}),
-  tickets: [{ v: '', src: 'manual', ok: true }], cands: [], notes: [],
+  tickets: [{ v: '', src: 'manual', ok: true }], tkBy: {}, sel: {}, cands: [], notes: [],
   draw: null, drawState: 'idle', lastCheck: null, useManual: false, demo: {},
   listCache: [], listPage: 0, listEnd: false, drawCache: {}, stats: null, statsBusy: false,
   hTab: 'stats', statDay: null, webBusy: {}, webErr: {}, del: LS.get('mresDel', {}), started: Date.now(), uid: 0, edit: null,
 };
-if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; delete S.mres.my; delete S.del.my; // ค่าเก่าจากเวอร์ชันที่เคยมียี่กีและหวยมาเลย์
+if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; delete S.mres.gsb; delete S.del.gsb; delete S.mres.my; delete S.del.my; if (S.mres.lao) { const n = S.mres.lao.length; S.mres.lao = S.mres.lao.filter(r => !(r.source === 'bot' || r.source === 'web') || (r.groups || []).some(g => g.id === 'l6')); if (S.mres.lao.length !== n) LS.set('mres', S.mres) } // ค่าเก่าจากเวอร์ชันที่เคยมียี่กีและหวยมาเลย์
 const saveSet = () => LS.set('settings', S.set);
 if (/rayriffy\.com/.test(S.set.api || '')) { S.set.api = ''; saveSet() } // ย้ายค่าเก่า: โดเมนนี้เลิกให้บริการแล้ว
 
@@ -140,7 +137,8 @@ if (/rayriffy\.com/.test(S.set.api || '')) { S.set.api = ''; saveSet() } // ย�
 function curResult() {
   if (S.demo[S.lottery]) return S.demo[S.lottery];
   if (S.lottery === 'thai' && S.draw && !S.useManual) return S.draw;
-  const m = S.mres[S.lottery]; return (m && m[0]) || null;
+  const m = S.mres[S.lottery]; if (!m || !m.length) return null;
+  const sid = S.sel[S.lottery]; return (sid && m.find(x => x.id === sid)) || m[0];   // งวดที่กดดูย้อนหลังเลือกแยกต่อหวย ไม่ไปสลับลำดับข้อมูลที่บันทึก
 }
 const grp = (r, id) => (r.groups.find(g => g.id === id) || { numbers: [] });
 function normThai(j, id) {
@@ -192,10 +190,14 @@ function fromDS(d) {
   return { lottery: 'thai', date: d.draw_date_th || thaiDateISO(d.draw_date), id: d.draw_date, groups, source: 'dataset' };
 }
 const customApi = () => (S.set.api || '').trim();
-async function loadLatest() {
-  if (customApi()) { try { return normThai(await jget('/latest')) } catch (e) { toast('แหล่งข้อมูลของคุณใช้ไม่ได้ ใช้ชุดข้อมูลสำรองแทน') } }
-  let last; // งวดล่าสุดอาจยังกรอกไม่ครบ → ข้ามไปงวดที่สมบูรณ์ล่าสุด
-  for (const d of (await loadDataset()).slice(0, 3)) { try { return fromDS(d) } catch (e) { last = e } }
+async function loadLatest() {   // บอทอาจค้างงวดเก่า / ชุดข้อมูลชุมชนอาจช้า → เทียบวันที่แล้วใช้งวดที่ใหม่กว่า
+  let best = null, last;
+  const ts = r => (drawDate(r) || 0).valueOf();
+  if (customApi()) { try { best = normThai(await jget('/latest')) } catch (e) { toast('แหล่งข้อมูลของคุณใช้ไม่ได้ ใช้ชุดข้อมูลสำรองแทน') } }
+  try {
+    for (const d of (await loadDataset()).slice(0, 3)) { try { const r = fromDS(d); if (!best || ts(r) > ts(best)) best = r; break } catch (e) { last = e } }   // งวดล่าสุดอาจยังกรอกไม่ครบ → ข้ามไปงวดที่สมบูรณ์ล่าสุด
+  } catch (e) { last = e }
+  if (best) return best;
   throw last;
 }
 async function loadDraw(id) {
@@ -226,7 +228,8 @@ async function loadHome() {
   } catch (e) { S.drawState = 'err'; S.drawErr = e.message }
   render();
 }
-/* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{gsb|lao|hanoi} → {date, groups:[…]} */
+/* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{lao|hanoi} → {date, groups:[…]} */
+const okBot = (lot, groups) => lot !== 'lao' || groups.some(g => g.id === 'l6' && /^\d{6}$/.test((g.numbers || [])[0] || ''));   // ลาวรุ่นเก่าไม่มีเลข 6 หลัก ตรวจโครงสร้างไม่ได้ (เคยหยิบปี 2569 เป็นผล) → ไม่รับ
 async function loadOtherApi(lot) {
   if (lot === 'thai' || !customApi()) return;
   try {
@@ -234,7 +237,7 @@ async function loadOtherApi(lot) {
       const hs = await jget('/other/' + lot + '-history');
       if (hs && Array.isArray(hs.draws)) {
         const have = new Set((S.mres[lot] || []).map(r => r.date));
-        const add = hs.draws.filter(d => d && d.date && Array.isArray(d.groups) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: d.groups, source: 'bot' }));
+        const add = hs.draws.filter(d => d && d.date && Array.isArray(d.groups) && okBot(lot, d.groups) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: d.groups, source: 'bot' }));
         if (add.length) {
           S.mres[lot] = [...(S.mres[lot] || []), ...add].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
           if (S.lottery === lot) render();
@@ -242,7 +245,7 @@ async function loadOtherApi(lot) {
       }
     } catch (e) { }
     const j = await jget('/other/' + lot);
-    if (!j || !Array.isArray(j.groups) || !j.groups.length || (S.del[lot] || []).includes(j.date)) return;
+    if (!j || !Array.isArray(j.groups) || !j.groups.length || !okBot(lot, j.groups) || (S.del[lot] || []).includes(j.date)) return;
     const cur = (S.mres[lot] || []).find(r => r.date === j.date) || (S.mres[lot] || [])[0];
     if (cur && (cur.date === j.date || JSON.stringify(cur.groups) === JSON.stringify(j.groups))) return;
     const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot' };
@@ -253,7 +256,7 @@ async function loadOtherApi(lot) {
 }
 
 
-/* ---------- ดึงผลจากเว็บโดยตรง (ฮานอย / ลาว / ธ.ก.ส.) ----------
+/* ---------- ดึงผลจากเว็บโดยตรง (ฮานอย / ลาว) ----------
    เบราว์เซอร์อ่านเว็บอื่นตรง ๆ ไม่ได้ (CORS) จึงผ่านพร็อกซี: (1) พร็อกซีของคุณเอง (Cloudflare Worker — ดู cf-worker.js ในชุดบอท) (2) พร็อกซีสาธารณะแบบ best-effort
    ตัวอ่านดูที่ "รูปแบบจำนวนหลักของผลรางวัล" ไม่ใช่โครง HTML — ถ้าไม่ตรงรูปแบบจะไม่บันทึก ไม่เดา */
 const p2 = n => String(n).padStart(2, '0');
@@ -284,36 +287,6 @@ function parseLao6(t) {   // หวยลาวพัฒนา: เลข 6 ห�
   }
   throw new Error('ยังไม่พบผลหวยลาว (เลข 6 หลักพร้อมท้าย 4/3/2 ตัว) — อาจยังไม่ออกผล');
 }
-function parseGSB(t) {   // หน้า ธ.ก.ส. จริงวางตัวเลข "ก่อน" ป้ายรางวัล (เช่น "9221612 รางวัลที่ 1") — รองรับทั้งเลขก่อนป้ายและเลขหลังป้าย
-  const L = { first: /รางวัลที่\s*1(?!\d)/g, last4: /(?:รางวัล)?(?:เลข)?ท้าย\s*4\s*ตัว/g, last3: /(?:รางวัล)?(?:เลข)?ท้าย\s*3\s*ตัว/g, last2: /(?:รางวัล)?(?:เลข)?ท้าย\s*2\s*ตัว/g }, LEN = { first: 7, last4: 4, last3: 3, last2: 2 };
-  const SKIP = /ดิจิทัล|ดิจิตอล|digital/gi;
-  const s = WEB_NOISE.reduce((x, re) => x.replace(re, ' '), t), marks = [];
-  for (const k in L) for (const m of s.matchAll(L[k])) marks.push([m.index, m.index + m[0].length, k, /^\s*(?:\S+\s+){0,3}?(?:ดิจิทัล|ดิจิตอล|digital)/i.test(s.slice(m.index + m[0].length, m.index + m[0].length + 40))]);
-  for (const m of s.matchAll(SKIP)) marks.push([m.index, m.index + m[0].length, null, false]);
-  marks.sort((a, b) => a[0] - b[0]);
-  const run = (mode) => {
-    const got = {};
-    marks.forEach(([st, end, key, dig], i) => {
-      if (!key || dig || got[key]) return;
-      let seg;
-      if (mode === 'before') { const prev = i > 0 ? marks[i - 1][1] : 0; const m = /((?:\d+\s+)*\d+)\s*(?:รางวัล|เลข)*\s*$/.exec(s.slice(prev, st)); seg = m ? m[1] : '' }
-      else seg = s.slice(end, i + 1 < marks.length ? marks[i + 1][0] : s.length);
-      let toks = (seg.match(/(?<!\d)\d+(?!\d)/g) || []).filter(x => x.length === LEN[key]);
-      if (key === 'first') toks = mode === 'before' ? toks.slice(-1) : toks.slice(0, 1);
-      if (toks.length) got[key] = toks;
-    });
-    return got.first && got.last3 ? got : null;
-  };
-  const got = run('before') || run('after');
-  if (!got) throw new Error('ไม่พบรางวัลที่ 1 (7 หลัก) หรือเลขท้าย 3 ตัวตามป้ายรางวัล');
-  const out = [G('g1', 'รางวัลที่ 1', 'full', 0, got.first)];
-  if (got.last4) out.push(G('g4', 'เลขท้าย 4 ตัว', 'last', 0, got.last4));
-  out.push(G('g3', 'เลขท้าย 3 ตัว', 'last', 0, got.last3));
-  if (got.last2) out.push(G('g2', 'เลขท้าย 2 ตัว', 'last', 0, got.last2));
-  const m = /งวด(?:ประจำ)?(?:วัน)?ที่\s*(\d{1,2})\s*([ก-๙.]+)\s*(\d{4})/.exec(t);
-  const mi = m ? TH_MONTHS.findIndex(x => x === m[2]) : -1;
-  return { groups: out, date: m && mi >= 0 ? `${+m[1]} ${TH_MONTHS[mi]} ${m[3]}` : null };
-}
 const TH_ABBR = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const thaiLabel = d => `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
@@ -336,7 +309,6 @@ function afterDate(text, d, strict, numeric) {   // ตัดข้อควา�
 const WEB = {
   hanoi: { host: 'xosominhngoc.com', dated: d => `https://www.xosominhngoc.com/ket-qua-xo-so/mien-bac/${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()}.html`, parse: (t) => ({ groups: parseXSMB(t) }), strict: true, numeric: true, hist: true },
   lao: { host: 'lottery.kapook.com', dated: d => `https://lottery.kapook.com/laolottery/${p2(d.getDate())}${p2(d.getMonth() + 1)}${d.getFullYear() + 543}`, parse: (t) => ({ groups: parseLao6(t) }), strict: true, hist: true },
-  gsb: { host: 'baac.or.th', url: 'https://www.baac.or.th/lottery-results', parse: parseGSB },
 };
 async function webText(url) {
   const enc = encodeURIComponent(url), tries = [];
@@ -490,8 +462,7 @@ function dreamMatch(q) {
 const DAYN = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
 const SCHED_DEF = {
   thai: { time: '14:30', dates: '1,16' },
-  gsb:  { time: '10:00', dates: '16' },
-  lao:  { time: '20:30', days: [1, 3, 5] },
+  lao:  { time: '20:30', days: [1, 2, 3, 4, 5] },
   hanoi: { time: '18:15', days: [0, 1, 2, 3, 4, 5, 6] },
   hanoi_sp: { time: '17:00', days: [0, 1, 2, 3, 4, 5, 6] },
   hanoi_vip: { time: '17:00', days: [0, 1, 2, 3, 4, 5, 6] },
@@ -798,6 +769,7 @@ const VIEWS = {
     const recent = S.checks.slice(0, 5).map(checkRow).join('') || '<div class="text-sm text-slate-500">ยังไม่มีประวัติการตรวจ</div>';
     return `<div class="space-y-4">${hero}
       <div class="flex flex-wrap gap-2">${r ? `<button class="${BP}" onclick="go('results')">ดูผลทั้งหมด</button>` : ''}${r && r.source !== 'demo' ? `<button class="${BS}" onclick="A.shareResult()">📤 แชร์ผล</button>` : ''}<button class="${BS}" onclick="A.picker()">📅 ตรวจงวดย้อนหลัง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div>
+      ${r ? `<details open><summary class="font-bold cursor-pointer mb-2">ผลรางวัลทั้งหมด — ${LOTTO[S.lottery].name} งวด ${esc(r.date || '')}</summary><div class="grid gap-2">${groupChips(r)}</div></details>` : ''}
       <div><div class="font-bold mb-2">ทางลัด</div><div class="grid grid-cols-3 gap-2">
         ${[['camera', '📷', 'ถ่ายภาพสลาก'], ['gallery', '🖼️', 'อัปโหลดรูป'], ['results', '⌨️', 'กรอก/พูดเลข']].map(([v, i, n]) => `<button onclick="go('${v}')" class="${CARD} !p-3 text-center active:scale-95 transition"><div class="text-3xl">${i}</div><div class="text-xs font-semibold mt-1">${n}</div></button>`).join('')}</div></div>
       <button onclick="go('lucky')" class="${CARD} w-full flex items-center gap-3 text-left active:scale-[.99] transition"><div class="text-3xl">🔮</div><div class="flex-1"><div class="font-semibold">สายมู — เลขมงคลวันนี้ & ทำนายฝัน</div><div class="text-xs text-slate-500">เปิดดูได้ทุกวัน · เพื่อความบันเทิง</div></div><div class="text-slate-400">›</div></button>
@@ -891,7 +863,7 @@ const VIEWS = {
           ${c.dates != null ? `วันที่ <input class="${INP} !w-28" value="${esc(c.dates)}" onchange="A.setSched('${l}',{dates:this.value})" placeholder="1,16">` : DAYN.map((n, d) => `<button class="chip border ${(c.days || []).includes(d) ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-300 dark:border-slate-600'}" onclick="A.togDay('${l}',${d})">${n}</button>`).join('')}</div></div>`}).join('')}
         <div class="text-[11px] text-slate-500 leading-relaxed">วัน/เวลาเริ่มต้นเป็นค่าประมาณที่ยังไม่ได้ยืนยันกับผู้ออกสลาก (หวยไทยอาจเลื่อนเมื่อติดวันหยุด) — ตรวจกับประกาศจริงแล้วแก้ให้ตรง · ถ้าต้องการเตือนแม้ปิดแอป ใช้ NOTIFY_WEBHOOK ของบอท (ดู README)</div>
         <button class="${BS} w-full" onclick="A.testRemind()">ทดสอบการเตือน</button>` : ''}</div>
-      <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🌐 ดึงผลจากเว็บโดยตรง</div><div class="text-xs text-slate-500">ฮานอย (xosominhngoc.com) · ลาว (lottery.kapook.com) · ธ.ก.ส. (baac.or.th)</div></div>${tg('web', S.set.web !== false).replace("A.toggle('web')", 'A.toggleWeb()')}</div>
+      <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🌐 ดึงผลจากเว็บโดยตรง</div><div class="text-xs text-slate-500">ฮานอย (xosominhngoc.com) · ลาว (lottery.kapook.com)</div></div>${tg('web', S.set.web !== false).replace("A.toggle('web')", 'A.toggleWeb()')}</div>
         <div class="text-xs text-slate-500 leading-relaxed">เบราว์เซอร์อ่านเว็บอื่นตรง ๆ ไม่ได้ จึงต้องผ่านพร็อกซี — ทางที่เสถียรคือพร็อกซีของคุณเอง (Cloudflare Worker ฟรี ดู cf-worker.js ในชุดบอท) ใส่ URL ตามรูปแบบ <code>https://ชื่อคุณ.workers.dev/?url={url}</code></div>
         <input class="${INP} text-sm" value="${esc(S.set.proxy || '')}" onchange="A.setProxy(this.value)" placeholder="https://ชื่อคุณ.workers.dev/?url={url}">
         <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label></div>
@@ -926,7 +898,7 @@ const VIEWS = {
     return `<div class="space-y-3">${secTitle('ℹ️ เกี่ยวกับ LottoSnap')}
       <div class="${CARD} bg-amber-50 dark:bg-amber-900/20 text-sm leading-relaxed"><b>ข้อความปฏิเสธความรับผิดชอบ</b><br>LottoSnap เป็นแอป <b>ฟรี</b> สำหรับ <b>ตรวจผลรางวัลเท่านั้น</b> ไม่มีการซื้อขายสลาก ไม่รับพนัน ไม่ทำนายผลรางวัลใด ๆ (ส่วน “สายมู” เป็นเนื้อหาเพื่อความบันเทิง ไม่มีผลต่อการออกรางวัล) ข้อมูลจาก API/การอ่านภาพอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการของผู้ออกสลากทุกครั้งก่อนดำเนินการใด ๆ ผู้พัฒนาไม่รับผิดชอบความเสียหายจากการใช้ข้อมูลในแอป สถิติย้อนหลังไม่ช่วยทำนายผลรางวัล</div>
       <div class="${CARD} text-sm space-y-2"><b>วิธีทำงาน</b><ul class="list-disc pl-5 space-y-1"><li>ถ่ายภาพ/อัปโหลดสลาก → อ่าน QR (jsQR) และตัวเลข 0-9 (Tesseract.js) โดยไม่สลับลำดับ</li><li>ทุกเลขต้องให้คุณตรวจ/แก้ไขก่อนกดตรวจผล</li><li>1 ใบถูกได้หลายรางวัลพร้อมกัน เช่น รางวัลที่ 5 + เลขท้าย 2 ตัว</li><li>ข้อมูลทั้งหมดเก็บในเครื่องของคุณ ภาพไม่ถูกอัปโหลดไปไหน (OCR ทำงานบนเบราว์เซอร์)</li></ul></div>
-      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ฮานอย: xosominhngoc.com · ลาว: lottery.kapook.com · ออมทรัพย์ ธ.ก.ส.: baac.or.th/lottery-results (ดึงผ่านบอท/พร็อกซีของคุณ หรือกรอกเองได้)</li></ul></div>
+      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ฮานอย: xosominhngoc.com · ลาว: lottery.kapook.com (ดึงผ่านบอท/พร็อกซีของคุณ หรือกรอกเองได้)</li></ul></div>
       <div class="text-xs text-center text-slate-500">LottoSnap v1.0</div></div>`;
   }
 };
@@ -1031,7 +1003,9 @@ async function makeCard(r) {
 
 /* ---------- Actions ---------- */
 const A = {
-  setLot(k) { S.lottery = k; LS.set('lottery', k); S.lastCheck = null; S.useManual = false; if (k === 'thai' && !S.draw) loadHome(); else { render(); loadOther(k) } },
+  setLot(k) {
+    S.tkBy[S.lottery] = { t: S.tickets, c: S.lastCheck };
+    const x = S.tkBy[k]; S.tickets = x ? x.t : [{ v: '', src: 'manual', ok: true }]; S.lottery = k; LS.set('lottery', k); S.lastCheck = x ? x.c : null; S.useManual = false; if (k === 'thai' && !S.draw) loadHome(); else { render(); loadOther(k) } },
   /* candidates */
   cToggle(id, v) { const c = S.cands.find(x => x.id === id); if (c) c.checked = v },
   cEdit(id, el) { const c = S.cands.find(x => x.id === id); if (!c) return; c.v = el.value.replace(/\D/g, ''); if (el.value !== c.v) el.value = c.v },
@@ -1104,7 +1078,7 @@ const A = {
     catch (e) { toast('โหลดไม่สำเร็จ: ' + e.message) }
   },
   pickLatest() { closeModal(); S.useManual = false; S.lastCheck = null; loadHome() },
-  pickSaved(i) { const l = S.mres[S.lottery]; const [x] = l.splice(i, 1); l.unshift(x); LS.set('mres', S.mres); S.lastCheck = null; delete S.demo[S.lottery]; closeModal(); render() },
+  pickSaved(i) { const l = S.mres[S.lottery]; if (!l[i]) return; S.sel[S.lottery] = l[i].id; S.lastCheck = null; delete S.demo[S.lottery]; closeModal(); render() },
   /* manual result editor */
   editResult() {
     const r = curResult();
