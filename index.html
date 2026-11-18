@@ -7,7 +7,16 @@
 <meta name="theme-color" content="#0f766e">
 <meta property="og:title" content="LottoSnap — ตรวจผลรางวัลฟรี">
 <meta property="og:description" content="ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจได้หลายใบพร้อมกัน ฟรี ไม่มีการซื้อขายหรือพนัน">
+<meta name="description" content="ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจหวยรัฐบาลไทย ลาว ฮานอย ฟรี ไม่มีการซื้อขายหรือพนัน">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://phanuchita2522-sketch.github.io/lottosnap/">
+<meta property="og:locale" content="th_TH">
+<meta property="og:site_name" content="LottoSnap">
+<meta property="og:image" content="https://phanuchita2522-sketch.github.io/lottosnap/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="LottoSnap — ตรวจผลรางวัลฟรี">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22 role=%22img%22 aria-label=%22LottoSnap%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%232dd4bf%22/%3E%3Cstop offset=%221%22 stop-color=%22%230f766e%22/%3E%3C/linearGradient%3E%3ClinearGradient id=%22gold%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fde68a%22/%3E%3Cstop offset=%221%22 stop-color=%22%23f59e0b%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22512%22 height=%22512%22 rx=%22112%22 fill=%22url%28%23bg%29%22/%3E%3C%21-- viewfinder corners %28snap%29 --%3E%3Cg fill=%22none%22 stroke=%22%23fff%22 stroke-width=%2222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 opacity=%22.95%22%3E%3Cpath d=%22M104 168V132a28 28 0 0 1 28-28H168%22/%3E%3Cpath d=%22M344 104H380a28 28 0 0 1 28 28V168%22/%3E%3Cpath d=%22M408 344V380a28 28 0 0 1-28 28H344%22/%3E%3Cpath d=%22M168 408H132a28 28 0 0 1-28-28V344%22/%3E%3C/g%3E%3C%21-- ticket with side notches --%3E%3Cg transform=%22rotate%28-6 256 256%29%22%3E%3Cpath fill=%22%23fff%22 d=%22M166 186H346a16 16 0 0 1 16 16V236a20 20 0 0 0 0 40V310a16 16 0 0 1-16 16H166a16 16 0 0 1-16-16V276a20 20 0 0 0 0-40V202a16 16 0 0 1 16-16Z%22/%3E%3Cg fill=%22%230f766e%22%3E%3Ccircle cx=%22190%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22218%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22246%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22274%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22302%22 cy=%22222%22 r=%229%22/%3E%3Ccircle cx=%22330%22 cy=%22222%22 r=%229%22/%3E%3C/g%3E%3Crect x=%22180%22 y=%22250%22 width=%22152%22 height=%2210%22 rx=%225%22 fill=%22%2399f6e4%22/%3E%3Crect x=%22180%22 y=%22274%22 width=%22104%22 height=%2210%22 rx=%225%22 fill=%22%2399f6e4%22/%3E%3C/g%3E%3C%21-- check badge %28result%29 --%3E%3Ccircle cx=%22336%22 cy=%22322%22 r=%2252%22 fill=%22url%28%23gold%29%22 stroke=%22%23fff%22 stroke-width=%2210%22/%3E%3Cpath d=%22M312 322l18 18 32-38%22 fill=%22none%22 stroke=%22%230f766e%22 stroke-width=%2216%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -95,7 +104,7 @@ const G = (id, name, match, reward = 0, numbers = []) => ({ id, name, match, rew
 function presetGroups(lot) {
   switch (lot) {
     case 'thai': return [G('prizeFirst', 'รางวัลที่ 1', 'full', 6000000), G('prizeFirstNear', 'ข้างเคียงรางวัลที่ 1', 'full', 100000), G('prizeSecond', 'รางวัลที่ 2', 'full', 200000), G('prizeThird', 'รางวัลที่ 3', 'full', 80000), G('prizeForth', 'รางวัลที่ 4', 'full', 40000), G('prizeFifth', 'รางวัลที่ 5', 'full', 20000), G('runningNumberFrontThree', 'เลขหน้า 3 ตัว', 'first', 4000), G('runningNumberBackThree', 'เลขท้าย 3 ตัว', 'last', 4000), G('runningNumberBackTwo', 'เลขท้าย 2 ตัว', 'last', 2000)];
-    case 'lao': return [G('l6', 'เลข 6 ตัว', 'full'), G('l4', 'เลขท้าย 4 ตัว', 'last'), G('l3', 'เลขท้าย 3 ตัว (3 ตัวบน)', 'last'), G('l2', 'เลขท้าย 2 ตัว (2 ตัวบน)', 'last'), G('l2b', '2 ตัวล่าง', 'full')];
+    case 'lao': return [G('l6', 'เลข 6 ตัว', 'full'), G('l4', 'เลขท้าย 4 ตัว', 'last'), G('l3', 'เลขท้าย 3 ตัว', 'last'), G('l2', 'เลขท้าย 2 ตัว', 'last')];
     case 'hanoi': return [G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
     case 'hanoi_sp': case 'hanoi_vip': case 'hanoi_ex': return [G('h4', 'เลข 4 ตัว', 'full'), G('h3', '3 ตัวบน', 'last'), G('h2', '2 ตัวบน', 'last'), G('h2b', '2 ตัวล่าง', 'full')];
   }
@@ -105,7 +114,7 @@ function presetGroups(lot) {
 function seeded(n, len, seed) { const out = []; let x = seed; while (out.length < n) { x = (Math.imul(x, 1103515245) + 12345) & 0x7fffffff; const v = String(x % Math.pow(10, len)).padStart(len, '0'); if (!out.includes(v)) out.push(v) } return out }
 const DEMO_NUM = {
   thai: { prizeFirst: ['123456'], prizeFirstNear: ['123455', '123457'], prizeSecond: seeded(5, 6, 11), prizeThird: seeded(10, 6, 22), prizeForth: seeded(50, 6, 33), prizeFifth: seeded(100, 6, 44), runningNumberFrontThree: ['123', '789'], runningNumberBackThree: ['456', '012'], runningNumberBackTwo: ['56'] },
-  lao: { l6: ['184036'], l4: ['4036'], l3: ['036'], l2: ['36'], l2b: ['40'] },
+  lao: { l6: ['184036'], l4: ['4036'], l3: ['036'], l2: ['36'] },
   hanoi: { h3: ['345'], h2: ['45'], h2b: ['90'] },
   hanoi_sp: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
   hanoi_vip: { h4: ['1234'], h3: ['234'], h2: ['34'], h2b: ['56'] },
@@ -129,7 +138,7 @@ const S = {
   listCache: [], listPage: 0, listEnd: false, drawCache: {}, stats: null, statsBusy: false,
   hTab: 'stats', statDay: null, webBusy: {}, webErr: {}, del: LS.get('mresDel', {}), started: Date.now(), uid: 0, edit: null,
 };
-if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; delete S.mres.gsb; delete S.del.gsb; delete S.mres.my; delete S.del.my; if (S.mres.lao) { const n = S.mres.lao.length; S.mres.lao = S.mres.lao.filter(r => !(r.source === 'bot' || r.source === 'web') || (r.groups || []).some(g => g.id === 'l6')); if (S.mres.lao.length !== n) LS.set('mres', S.mres) } // ค่าเก่าจากเวอร์ชันที่เคยมียี่กีและหวยมาเลย์
+if (!LOTTO[S.lottery]) S.lottery = 'thai'; delete S.mres.yeekee; delete S.mres.gsb; delete S.del.gsb; delete S.mres.my; delete S.del.my; if (S.mres.lao) { const n = S.mres.lao.length; S.mres.lao = S.mres.lao.filter(r => !(r.source === 'bot' || r.source === 'web') || r.via === 'api' || (r.groups || []).some(g => g.id === 'l6')); S.mres.lao.forEach(r => { if (r.groups) r.groups = r.groups.filter(g => g.id !== 'l2b').map(g => LAO_NAME[g.id] ? Object.assign({}, g, { name: LAO_NAME[g.id] }) : g) }); LS.set('mres', S.mres) } // ค่าเก่าจากเวอร์ชันที่เคยมียี่กีและหวยมาเลย์
 const saveSet = () => LS.set('settings', S.set);
 if (/rayriffy\.com/.test(S.set.api || '')) { S.set.api = ''; saveSet() } // ย้ายค่าเก่า: โดเมนนี้เลิกให้บริการแล้ว
 
@@ -230,8 +239,9 @@ async function loadHome() {
   render();
 }
 /* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{lao|hanoi} → {date, groups:[…]} */
-const cleanGroups = gs => (Array.isArray(gs) ? gs : []).filter(g => g && typeof g === 'object' && Array.isArray(g.numbers)).map(g => ({
-  id: String(g.id || '').slice(0, 40), name: String(g.name || '').slice(0, 80), match: ['full', 'last', 'first'].includes(g.match) ? g.match : 'full',
+const LAO_NAME = { l6: 'เลข 6 ตัว', l4: 'เลขท้าย 4 ตัว', l3: 'เลขท้าย 3 ตัว', l2: 'เลขท้าย 2 ตัว' };
+const cleanGroups = gs => (Array.isArray(gs) ? gs : []).filter(g => g && typeof g === 'object' && Array.isArray(g.numbers) && g.id !== 'l2b').map(g => ({
+  id: String(g.id || '').slice(0, 40), name: LAO_NAME[g.id] || String(g.name || '').slice(0, 80), match: ['full', 'last', 'first'].includes(g.match) ? g.match : 'full',
   reward: Number.isFinite(+g.reward) ? +g.reward : 0, numbers: g.numbers.map(n => String(n).replace(/\D/g, '').slice(0, 12)).filter(Boolean).slice(0, 200) })).filter(g => g.id);   // กันข้อมูลจากบอท/เว็บรูปแบบเพี้ยนทำให้หน้าจอพัง
 const okBot = (lot, groups, via) => lot !== 'lao' || via === 'api' || groups.some(g => g.id === 'l6' && /^\d{6}$/.test((g.numbers || [])[0] || ''));   // ลาวรุ่นเก่าไม่มีเลข 6 หลัก ตรวจโครงสร้างไม่ได้ (เคยหยิบปี 2569 เป็นผล) → ไม่รับ
 async function loadOtherApi(lot) {
@@ -241,7 +251,7 @@ async function loadOtherApi(lot) {
       const hs = await jget('/other/' + lot + '-history');
       if (hs && Array.isArray(hs.draws)) {
         const have = new Set((S.mres[lot] || []).map(r => r.date));
-        const add = hs.draws.filter(d => d && typeof d.date === 'string' && d.date.length < 40 && Array.isArray(d.groups) && okBot(lot, d.groups, d.via) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: cleanGroups(d.groups), source: 'bot' })).filter(r => r.groups.length);
+        const add = hs.draws.filter(d => d && typeof d.date === 'string' && d.date.length < 40 && Array.isArray(d.groups) && okBot(lot, d.groups, d.via) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: cleanGroups(d.groups), source: 'bot', ...(d.via === 'api' ? { via: 'api' } : {}) })).filter(r => r.groups.length);
         if (add.length) {
           S.mres[lot] = [...(S.mres[lot] || []), ...add].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
           if (S.lottery === lot) render();
@@ -252,7 +262,7 @@ async function loadOtherApi(lot) {
     if (!j || !Array.isArray(j.groups) || !j.groups.length || !okBot(lot, j.groups, j.via) || (S.del[lot] || []).includes(j.date)) return;
     const cur = (S.mres[lot] || []).find(r => r.date === j.date) || (S.mres[lot] || [])[0];
     if (cur && (cur.date === j.date || JSON.stringify(cur.groups) === JSON.stringify(j.groups))) return;
-    const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot' };
+    const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot', ...(j.via === 'api' ? { via: 'api' } : {}) };
     S.mres[lot] = [res, ...(S.mres[lot] || [])].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);   // เรียงตามวันที่ ไม่ให้งวดเก่าขึ้นมาอยู่หน้าสุด
     if (S.set.notif && S.mres[lot][0] === res) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + (j.date || '—'));
     if (S.lottery === lot) { S.lastCheck = null; S.useManual = false; delete S.demo[lot]; render() }
@@ -275,7 +285,7 @@ const mkHanoi = w => {   // w = 27 เลขตามลำดับ ĐB, G1, G2
   return [G('h3', '3 ตัวบน', 'last', 0, [w[0].slice(-3)]), G('h2', '2 ตัวบน', 'last', 0, [w[0].slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [w[1].slice(-2)]),
     ...cut.map(([a, b, n], i) => G('v_' + i, 'ทางการ · ' + n, 'last', 0, w.slice(a, b)))];
 };
-const mkLao = (n4, n6) => [...(n6 ? [G('l6', 'เลข 6 ตัว', 'full', 0, [n6])] : []), G('l4', 'เลขท้าย 4 ตัว', 'last', 0, [n4]), G('l3', 'เลขท้าย 3 ตัว (3 ตัวบน)', 'last', 0, [n4.slice(1)]), G('l2', 'เลขท้าย 2 ตัว (2 ตัวบน)', 'last', 0, [n4.slice(2)]), G('l2b', '2 ตัวล่าง', 'full', 0, [n4.slice(0, 2)])];
+const mkLao = (n4, n6) => [...(n6 ? [G('l6', 'เลข 6 ตัว', 'full', 0, [n6])] : []), G('l4', 'เลขท้าย 4 ตัว', 'last', 0, [n4]), G('l3', 'เลขท้าย 3 ตัว', 'last', 0, [n4.slice(1)]), G('l2', 'เลขท้าย 2 ตัว', 'last', 0, [n4.slice(2)])];
 const XS_LEN = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2];
 function parseXSMB(t) {
   const toks = webTokens(t); let w = winFind(toks, XS_LEN);
@@ -355,7 +365,7 @@ async function webDraw(lot, d) {   // ดึงงวดวันที่ d ข
   }
   throw err;
 }
-function saveWeb(lot, date, groups, quiet) {
+function saveWeb(lot, date, groups, quiet, via) {
   const l = S.mres[lot] || [];
   if ((S.del[lot] || []).includes(date)) return false;
   const ex = l.find(r => r.date === date);
@@ -364,7 +374,7 @@ function saveWeb(lot, date, groups, quiet) {
     if (ex.source !== 'web' || groups.length <= ex.groups.length || !gn(groups, key) || gn(groups, key) !== gn(ex.groups, key)) return false;
     ex.groups = groups; LS.set('mres', S.mres); return true;
   }
-  const res = { lottery: lot, date, id: 'web-' + date, groups, source: 'web' };
+  const res = { lottery: lot, date, id: 'web-' + date, groups, source: 'web', ...(via ? { via } : {}) };
   S.mres[lot] = [...l, res].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
   if (!quiet && S.set.notif && S.mres[lot][0] === res) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + date);
   return true;
@@ -398,7 +408,7 @@ async function loadApi(lot) {   // คืนจำนวนงวดที่ด
     try {
       const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(String(d.drawDate)); if (!m || d.lottery !== W.api) continue;
       const day = new Date(+m[1], +m[2] - 1, +m[3]); if (day > today) continue;   // ไม่รับงวดอนาคต
-      if (saveWeb(lot, thaiLabel(day), apiGroups(lot, d.prizes), true)) n++;
+      if (saveWeb(lot, thaiLabel(day), apiGroups(lot, d.prizes), true, 'api')) n++;
     } catch (e) { /* งวดที่รูปแบบไม่ตรง = ข้าม */ }
   }
   return n;
@@ -1016,7 +1026,12 @@ function statsHTML(list) {
 }
 
 /* ---------- แชร์ผลรางวัล / ชวนเพื่อน (LINE, Facebook, ระบบแชร์ของเครื่อง, คัดลอก, ภาพการ์ด) ---------- */
-function appUrl() { const s = (S.set.shareUrl || '').trim(); return s || (/^https?:/.test(location.href) ? location.href.split('#')[0] : '') }
+const PUBLIC_URL = 'https://phanuchita2522-sketch.github.io/lottosnap/';   // ลิงก์จริงที่ผู้อื่นเปิดได้ (GitHub Pages)
+function appUrl() {   // ลิงก์ที่ใส่ในข้อความแชร์: ที่ผู้ใช้ตั้งเอง > หน้าเว็บสาธารณะปัจจุบัน > ลิงก์หลัก (ไม่ใช้ file:// / localhost / IP ในวงแลน ที่คนอื่นเปิดไม่ได้)
+  const s = (S.set.shareUrl || '').trim(); if (s) return s;
+  const pub = /^https:/.test(location.protocol) && !/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname);
+  return pub ? location.origin + location.pathname : PUBLIC_URL;
+}
 function resultText(r) {
   const lines = ['🎟️ ผล' + LOTTO[r.lottery].name + ' งวด ' + r.date];
   r.groups.forEach(g => { if (g.numbers.length && g.numbers.length <= 3) lines.push(g.name + ': ' + g.numbers.join(' ')) });
@@ -1193,8 +1208,9 @@ const A = {
   invite() { S.shareRes = null; openShare('ชวนเพื่อนใช้ LottoSnap', inviteText(), false) },
   shLine() { window.open('https://line.me/R/msg/text/?' + encodeURIComponent(S.share.text), '_blank', 'noopener') },
   async shFb() {
-    const ok = await clip(S.share.text), u = appUrl();
-    window.open(u ? 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u) : 'https://www.facebook.com/', '_blank', 'noopener');
+    const u = appUrl(), cp = clip(S.share.text);   // เปิดหน้าต่างทันทีในจังหวะที่ผู้ใช้กดปุ่ม (ถ้ารอ clipboard ก่อน iOS/Safari จะบล็อกป๊อปอัป)
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank', 'noopener');
+    const ok = await cp;
     toast(ok ? 'คัดลอกข้อความแล้ว — วางในช่องโพสต์ Facebook ได้เลย' : 'เปิด Facebook แล้ว (คัดลอกอัตโนมัติไม่ได้ กรุณาคัดลอกข้อความเอง)');
   },
   async shCopy() { toast(await clip(S.share.text) ? 'คัดลอกแล้ว' : 'คัดลอกไม่ได้ ลองเลือกข้อความเอง') },
