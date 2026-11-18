@@ -1211,10 +1211,10 @@ const A = {
     S.shareRes = r; openShare('แชร์ผลรางวัล', resultText(r), true);
   },
   invite() { S.shareRes = null; openShare('ชวนเพื่อนใช้ LottoSnap', inviteText(), false) },
-  shLine() { window.open('https://line.me/R/msg/text/?' + encodeURIComponent(S.share.text), '_blank', 'noopener') },
+  shLine() { window.open('https://line.me/R/msg/text/?' + encodeURIComponent(S.share.text), '_blank', 'noopener,noreferrer') },   // noreferrer: ไม่ให้ LINE เห็นเว็บต้นทาง (เคยมีลิงก์ราก github.io ต่อท้ายข้อความ → 404)
   async shFb() {
     const u = appUrl(), cp = clip(S.share.text);   // เปิดหน้าต่างทันทีในจังหวะที่ผู้ใช้กดปุ่ม (ถ้ารอ clipboard ก่อน iOS/Safari จะบล็อกป๊อปอัป)
-    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank', 'noopener');
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank', 'noopener,noreferrer');
     const ok = await cp;
     toast(ok ? 'คัดลอกข้อความแล้ว — วางในช่องโพสต์ Facebook ได้เลย' : 'เปิด Facebook แล้ว (คัดลอกอัตโนมัติไม่ได้ กรุณาคัดลอกข้อความเอง)');
   },
