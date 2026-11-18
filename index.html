@@ -233,7 +233,7 @@ async function loadHome() {
 const cleanGroups = gs => (Array.isArray(gs) ? gs : []).filter(g => g && typeof g === 'object' && Array.isArray(g.numbers)).map(g => ({
   id: String(g.id || '').slice(0, 40), name: String(g.name || '').slice(0, 80), match: ['full', 'last', 'first'].includes(g.match) ? g.match : 'full',
   reward: Number.isFinite(+g.reward) ? +g.reward : 0, numbers: g.numbers.map(n => String(n).replace(/\D/g, '').slice(0, 12)).filter(Boolean).slice(0, 200) })).filter(g => g.id);   // กันข้อมูลจากบอท/เว็บรูปแบบเพี้ยนทำให้หน้าจอพัง
-const okBot = (lot, groups) => lot !== 'lao' || groups.some(g => g.id === 'l6' && /^\d{6}$/.test((g.numbers || [])[0] || ''));   // ลาวรุ่นเก่าไม่มีเลข 6 หลัก ตรวจโครงสร้างไม่ได้ (เคยหยิบปี 2569 เป็นผล) → ไม่รับ
+const okBot = (lot, groups, via) => lot !== 'lao' || via === 'api' || groups.some(g => g.id === 'l6' && /^\d{6}$/.test((g.numbers || [])[0] || ''));   // ลาวรุ่นเก่าไม่มีเลข 6 หลัก ตรวจโครงสร้างไม่ได้ (เคยหยิบปี 2569 เป็นผล) → ไม่รับ
 async function loadOtherApi(lot) {
   if (lot === 'thai' || !customApi()) return;
   try {
@@ -241,7 +241,7 @@ async function loadOtherApi(lot) {
       const hs = await jget('/other/' + lot + '-history');
       if (hs && Array.isArray(hs.draws)) {
         const have = new Set((S.mres[lot] || []).map(r => r.date));
-        const add = hs.draws.filter(d => d && typeof d.date === 'string' && d.date.length < 40 && Array.isArray(d.groups) && okBot(lot, d.groups) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: cleanGroups(d.groups), source: 'bot' })).filter(r => r.groups.length);
+        const add = hs.draws.filter(d => d && typeof d.date === 'string' && d.date.length < 40 && Array.isArray(d.groups) && okBot(lot, d.groups, d.via) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: cleanGroups(d.groups), source: 'bot' })).filter(r => r.groups.length);
         if (add.length) {
           S.mres[lot] = [...(S.mres[lot] || []), ...add].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
           if (S.lottery === lot) render();
@@ -249,7 +249,7 @@ async function loadOtherApi(lot) {
       }
     } catch (e) { }
     const j = await jget('/other/' + lot); if (j && typeof j.date === 'string') j.date = j.date.slice(0, 40); if (j) j.groups = cleanGroups(j.groups);
-    if (!j || !Array.isArray(j.groups) || !j.groups.length || !okBot(lot, j.groups) || (S.del[lot] || []).includes(j.date)) return;
+    if (!j || !Array.isArray(j.groups) || !j.groups.length || !okBot(lot, j.groups, j.via) || (S.del[lot] || []).includes(j.date)) return;
     const cur = (S.mres[lot] || []).find(r => r.date === j.date) || (S.mres[lot] || [])[0];
     if (cur && (cur.date === j.date || JSON.stringify(cur.groups) === JSON.stringify(j.groups))) return;
     const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot' };
@@ -296,8 +296,27 @@ const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const thaiLabel = d => `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
 function afterDate(text, d, strict, numeric) {   // ตัดข้อความให้เหลือหลังวันที่ที่ต้องการ (กันไปหยิบผลงวดอื่นในหน้าเดียวกัน)
   const y = d.getFullYear() + 543, mo = d.getMonth();
-  const re = numeric ? new RegExp(`(?<!\\d)0?${d.getDate()}\\s*[/.\\-]\\s*0?${mo + 1}\\s*[/.\\-]\\s*${d.getFullYear()}(?!\\d)`)
+  const re = (numeric && numeric !== "thblock") ? new RegExp(`(?<!\\d)0?${d.getDate()}\\s*[/.\\-]\\s*0?${mo + 1}\\s*[/.\\-]\\s*${d.getFullYear()}(?!\\d)`)
     : new RegExp(`(?<!\\d)${d.getDate()}\\s*(?:${reEsc(TH_MONTHS[mo])}|${reEsc(TH_ABBR[mo])})\\s*(?:${y}|${y % 100})(?!\\d)`);
+  if (numeric === 'block') {   // หน้ารวมหลายงวด (xosodaiphat): เอาช่วงหลังหัวข้อวันที่นี้จนถึงวันที่ถัดไป ที่มีเลขพอเป็นผลเต็ม (ข้ามลิงก์/เมนูที่มีแต่วันที่)
+    const g = new RegExp(re.source, 'g'), nxr = /(?<!\d)\d{1,2}\s*[\/.\-]\s*\d{1,2}\s*[\/.\-]\s*\d{4}(?!\d)/;
+    let mm;
+    while ((mm = g.exec(text))) {
+      let rest = text.slice(mm.index + mm[0].length); const nx = nxr.exec(rest); if (nx) rest = rest.slice(0, nx.index);
+      rest = rest.replace(/(?<![0-9A-Za-z])\d{1,2}[A-Z]{2}(?![0-9A-Za-z])/g, ' ');   // "Mã ĐB" เช่น 15LH ไม่ใช่เลขรางวัล
+      if ((rest.match(/(?<!\d)\d{2,}(?!\d)/g) || []).length >= 27) return rest;
+    }
+    throw new Error('ไม่พบงวดวันที่ ' + thaiLabel(d) + ' ที่มีผลครบในหน้าเว็บ (ยังไม่ออก/โครงหน้าเปลี่ยน)');
+  }
+  if (numeric === 'thblock') {   // หน้ารวมหลายงวด วันที่ไทย (kapook): ข้ามลิงก์ข้างที่มีแต่วันที่ เอาช่วงที่มีเลข 6/4/3/2 ครบจริง
+    const g = new RegExp(re.source, 'g'), nxr = new RegExp(`(?<!\\d)\\d{1,2}\\s*(?:${[...TH_MONTHS, ...TH_ABBR].map(reEsc).join('|')})\\s*(?:\\d{4}|\\d{2})(?!\\d)`);
+    let mm;
+    while ((mm = g.exec(text))) {
+      let rest = text.slice(mm.index + mm[0].length); const nx = nxr.exec(rest); if (nx) rest = rest.slice(0, nx.index);
+      try { if (parseLao6(rest)) return rest } catch (e) { }
+    }
+    throw new Error('ไม่พบงวดวันที่ ' + thaiLabel(d) + ' ที่มีเลข 6/4/3/2 ครบในหน้าเว็บ (ยังไม่ออก/โครงหน้าเปลี่ยน)');
+  }
   const m = re.exec(text);
   if (m) {
     let rest = text.slice(m.index + m[0].length);
@@ -311,8 +330,9 @@ function afterDate(text, d, strict, numeric) {   // ตัดข้อควา�
   return text;
 }
 const WEB = {
-  hanoi: { host: 'xosominhngoc.com', dated: d => `https://www.xosominhngoc.com/ket-qua-xo-so/mien-bac/${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()}.html`, parse: (t) => ({ groups: parseXSMB(t) }), strict: true, numeric: true, hist: true },
-  lao: { host: 'lottery.kapook.com', dated: d => `https://lottery.kapook.com/laolottery/${p2(d.getDate())}${p2(d.getMonth() + 1)}${d.getFullYear() + 543}`, parse: (t) => ({ groups: parseLao6(t) }), strict: true, hist: true },
+  hanoi_sp: { host: 'ผลหวย.com', api: 'hanoi-special' }, hanoi_vip: { host: 'ผลหวย.com', api: 'hanoi-vip' }, hanoi_ex: { host: 'ผลหวย.com', api: 'hanoi-adhoc' },
+  hanoi: { host: 'xosodaiphat.com · ผลหวย.com', api: 'hanoi-normal', srcs: [{ dated: () => 'https://xosodaiphat.com/xsmb-xo-so-mien-bac.html', numeric: 'block' }, { dated: d => `https://www.xosominhngoc.com/ket-qua-xo-so/mien-bac/${p2(d.getDate())}-${p2(d.getMonth() + 1)}-${d.getFullYear()}.html`, numeric: true }], parse: (t) => ({ groups: parseXSMB(t) }), strict: true, hist: true },
+  lao: { host: 'ผลหวย.com · kapook', api: 'lao-lottery', srcs: [{ dated: () => 'https://lottery.kapook.com/laolottery', numeric: 'thblock' }, { dated: d => `https://lottery.kapook.com/laolottery/${p2(d.getDate())}${p2(d.getMonth() + 1)}${d.getFullYear() + 543}` }], parse: (t) => ({ groups: parseLao6(t) }), strict: true, hist: true },
 };
 async function webText(url) {
   const enc = encodeURIComponent(url), tries = [];
@@ -328,21 +348,67 @@ async function webText(url) {
   const e = new Error('ดึงหน้าเว็บไม่ได้ (เบราว์เซอร์ถูกบล็อก CORS และพร็อกซีใช้ไม่ได้) — ตั้งพร็อกซีของคุณเองในตั้งค่า'); e.net = true; e.cause = err; throw e;
 }
 async function webDraw(lot, d) {   // ดึงงวดวันที่ d ของหวยที่มีหน้าแยกตามวัน → { date, groups }
-  const W = WEB[lot], text = afterDate(await webText(W.dated(d)), d, W.strict, W.numeric), r = W.parse(text);
-  return { date: thaiLabel(d), groups: r.groups };
+  const W = WEB[lot], list = W.srcs || [W]; let err;
+  for (const X of list) {   // ลองตามลำดับ แหล่งแรกที่อ่านได้ครบเป็นผล
+    try { const r = W.parse(afterDate(await webText(X.dated(d)), d, W.strict, X.numeric)); return { date: thaiLabel(d), groups: r.groups }; }
+    catch (e) { err = e }
+  }
+  throw err;
 }
 function saveWeb(lot, date, groups, quiet) {
   const l = S.mres[lot] || [];
-  if (l.some(r => r.date === date) || (S.del[lot] || []).includes(date)) return false;
+  if ((S.del[lot] || []).includes(date)) return false;
+  const ex = l.find(r => r.date === date);
+  if (ex) {   // งวดเดียวกันจากอีกแหล่ง: เลขหลักตรงกัน + ชุดใหม่ละเอียดกว่า (ลาวมี 6 หลัก / ฮานอยมีรางวัลทางการ) ที่ดึงจากเว็บ → อัปเกรด; นอกนั้นคงของเดิม
+    const key = lot === 'lao' ? 'l4' : 'h3', gn = (gs, id) => ((gs.find(g => g.id === id) || {}).numbers || [])[0];
+    if (ex.source !== 'web' || groups.length <= ex.groups.length || !gn(groups, key) || gn(groups, key) !== gn(ex.groups, key)) return false;
+    ex.groups = groups; LS.set('mres', S.mres); return true;
+  }
   const res = { lottery: lot, date, id: 'web-' + date, groups, source: 'web' };
   S.mres[lot] = [...l, res].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
   if (!quiet && S.set.notif && S.mres[lot][0] === res) addNotif('📥 ผลใหม่ ' + LOTTO[lot].name, 'งวด ' + date);
   return true;
 }
+/* ผลหวย.com — API สาธารณะฟรี (CORS *, ไม่ต้องใช้คีย์, แคช 300 วินาที): ลาว 4/3/2 ตัว · ฮานอย = รางวัลพิเศษ 5 หลัก + 3 ตัวบน + 2 ตัวล่าง
+   ตรวจโครงสร้าง/ความสอดคล้องของเลขก่อนบันทึก ไม่ตรงรูปแบบ = ข้ามงวดนั้น (ไม่เดา) */
+const API_BASE = 'https://xn--t3cmiit.com/api/public/results';
+function apiGroups(lot, prizes) {
+  const pz = {}; for (const p of prizes || []) if (p && Array.isArray(p.numbers) && p.numbers.length === 1) pz[String(p.slug)] = String(p.numbers[0]).trim();
+  const dg = (v, n) => { if (!new RegExp('^\\d{' + n + '}$').test(v || '')) throw new Error('รูปแบบเลขไม่ตรง'); return v };
+  if (lot === 'lao') {
+    const n4 = dg(pz['last-four-digit'], 4), n3 = dg(pz['last-three-digit'], 3), n2 = dg(pz['last-two-digit'], 2);
+    if (n4.slice(1) !== n3 || n4.slice(2) !== n2) throw new Error('เลขท้าย 4/3/2 ไม่สอดคล้องกัน');
+    return mkLao(n4, null);
+  }
+  const sp = dg(pz['special-prize'], 5), t3 = dg(pz['three-digit-top'], 3), b2 = dg(pz['two-digit-bottom'], 2);
+  if (sp.slice(-3) !== t3) throw new Error('3 ตัวบนไม่ตรงกับท้ายรางวัลพิเศษ');
+  const g = [G('h3', '3 ตัวบน', 'last', 0, [t3]), G('h2', '2 ตัวบน', 'last', 0, [sp.slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [b2])];
+  return lot === 'hanoi' ? g : [G('h4', 'เลข 4 ตัว', 'full', 0, [sp.slice(-4)]), ...g];
+}
+S.apiAt = S.apiAt || {};
+async function loadApi(lot) {   // คืนจำนวนงวดที่ดึงได้ (0 = ไม่มีงวดใหม่) / throw ถ้าเรียกไม่ได้
+  const W = WEB[lot]; if (!W || !W.api) return 0;
+  if (Date.now() - (S.apiAt[lot] || 0) < 300000) return 0;   // ตามที่เว็บขอ: อย่าดึงถี่กว่า 300 วินาที
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000); let j;
+  try { const r = await fetch(API_BASE + '?lottery=' + encodeURIComponent(W.api) + '&limit=20', { signal: ctl.signal }); if (r.status === 404) { S.apiAt[lot] = Date.now(); return 0 } if (!r.ok) throw new Error('HTTP ' + r.status); j = await r.json() }
+  finally { clearTimeout(t) }
+  if (!j || !j.success || !Array.isArray(j.data)) throw new Error('ผลหวย.com ตอบรูปแบบที่ไม่รู้จัก');
+  S.apiAt[lot] = Date.now(); let n = 0; const today = ictNow(); today.setHours(23, 59, 59, 999);
+  for (const d of j.data) {
+    try {
+      const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(String(d.drawDate)); if (!m || d.lottery !== W.api) continue;
+      const day = new Date(+m[1], +m[2] - 1, +m[3]); if (day > today) continue;   // ไม่รับงวดอนาคต
+      if (saveWeb(lot, thaiLabel(day), apiGroups(lot, d.prizes), true)) n++;
+    } catch (e) { /* งวดที่รูปแบบไม่ตรง = ข้าม */ }
+  }
+  return n;
+}
 async function loadWeb(lot) {
   const W = WEB[lot]; if (!W || S.set.web === false || S.webBusy[lot]) return;
   S.webBusy[lot] = true; S.webErr[lot] = null; if (S.lottery === lot) render();
+  let primaryErr = null;
   try {
+    if (!(W.url || W.srcs || W.dated)) throw Object.assign(new Error('-'), { skip: true });
     if (W.url) { const t = await webText(W.url), r = W.parse(t); if (!r.date) throw new Error('อ่านวันที่งวดไม่ได้ จึงไม่บันทึก'); saveWeb(lot, r.date, r.groups) }
     else {
       const now = ictNow(); let got = null, last;
@@ -350,11 +416,13 @@ async function loadWeb(lot) {
       if (!got) throw last || new Error('ยังไม่พบผลล่าสุด');
       saveWeb(lot, got.date, got.groups);
     }
-  } catch (e) { S.webErr[lot] = e.message }
+  } catch (e) { if (!e.skip) primaryErr = e }
+  try { const n = await loadApi(lot); if (n) primaryErr = null; else if (primaryErr && S.apiAt[lot] && (S.mres[lot] || []).length) primaryErr = null } catch (e) { if (!primaryErr || e.skip) primaryErr = e }
+  S.webErr[lot] = primaryErr ? primaryErr.message : null;
   S.webBusy[lot] = false; S.lastCheck = null; if (S.lottery === lot) render();
 }
 async function loadWebHistory(lot, days) {
-  const W = WEB[lot]; if (!W || !W.dated || S.webBusy[lot]) return;
+  const W = WEB[lot]; if (!W || !(W.dated || W.srcs) || S.webBusy[lot]) return;
   S.webBusy[lot] = true; S.webErr[lot] = null; render(); const now = ictNow(); let ok = 0, tried = 0, net = false;
   const todo = Array.from({ length: days }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)).filter(d => !(S.mres[lot] || []).some(r => r.date === thaiLabel(d)));
   let k = 0;
@@ -743,7 +811,7 @@ function groupChips(r, hitSet = new Set()) {
 function resultNotice(r) {
   if (r && r.source === 'demo') return `<div class="rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 p-3 text-sm space-y-2"><div><b>🧪 โหมดข้อมูลตัวอย่าง</b> — ตัวเลขชุดนี้ไม่ใช่ผลรางวัลจริง และจะไม่บันทึกลงประวัติ</div><div class="flex flex-wrap gap-2"><button class="${BS}" onclick="A.demoTicket()">ใส่เลขตัวอย่าง ${DEMO_HINT[S.lottery]}</button><button class="${BS}" onclick="A.exitDemo()">ออกจากโหมดตัวอย่าง</button></div></div>`;
   if (r && r.source === 'dataset') return `<div class="text-xs text-slate-500 px-1">ข้อมูลจากชุดข้อมูลชุมชน (CC BY 4.0) อาจล่าช้ากว่าประกาศจริง — โปรดยืนยันกับ <a class="underline" target="_blank" rel="noopener" href="https://www.glo.or.th">glo.or.th</a></div>`;
-  if (r && r.source === 'web' && WEB[r.lottery]) return `<div class="text-xs text-slate-500 px-1">ดึงอัตโนมัติจาก ${WEB[r.lottery].host} อาจคลาดเคลื่อนหรือล่าช้า — โปรดยืนยันกับประกาศของผู้ออกสลาก</div>`;
+  if (r && (r.source === 'web' || r.source === 'bot') && WEB[r.lottery]) return `<div class="text-xs text-slate-500 px-1">ดึงอัตโนมัติจาก ${WEB[r.lottery].host}${WEB[r.lottery].api ? ' — ข้อมูลจาก <a class="underline" target="_blank" rel="noopener" href="https://xn--t3cmiit.com">ผลหวย.com</a>' : ''} อาจคลาดเคลื่อนหรือล่าช้า — โปรดยืนยันกับประกาศของผู้ออกสลาก</div>`;
   if (r) return '';
   const th = S.lottery === 'thai';
   return `<div class="${CARD} space-y-3 text-center"><div class="text-3xl">${th ? '📡' : '📝'}</div><div class="font-semibold">ยังไม่มีผลรางวัล</div>${th && S.drawErr ? `<div class="text-xs text-rose-600">${esc(S.drawErr)}</div>` : ''}<div class="text-xs text-slate-500">${th ? 'ลองโหลดใหม่ หรือทดสอบการตรวจด้วยข้อมูลตัวอย่าง' : webStatus(S.lottery)}</div><div class="flex flex-wrap gap-2 justify-center">${th ? `<button class="${BP}" onclick="loadHome()">ลองโหลดใหม่</button>` : (WEB[S.lottery] ? `<button class="${BP}" onclick="loadWeb('${S.lottery}')" ${S.webBusy[S.lottery] ? 'disabled' : ''}>🌐 ดึงผลจากเว็บ</button>` : '')}<button class="${BS}" onclick="A.useDemo()">🧪 ใช้ข้อมูลตัวอย่าง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button>${th ? '' : `<button class="${BS}" onclick="go('settings')">⚙️ เชื่อมบอทดึงผลอัตโนมัติ</button>`}</div></div>`;
@@ -867,7 +935,7 @@ const VIEWS = {
           ${c.dates != null ? `วันที่ <input class="${INP} !w-28" value="${esc(c.dates)}" onchange="A.setSched('${l}',{dates:this.value})" placeholder="1,16">` : DAYN.map((n, d) => `<button class="chip border ${(c.days || []).includes(d) ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-300 dark:border-slate-600'}" onclick="A.togDay('${l}',${d})">${n}</button>`).join('')}</div></div>`}).join('')}
         <div class="text-[11px] text-slate-500 leading-relaxed">วัน/เวลาเริ่มต้นเป็นค่าประมาณที่ยังไม่ได้ยืนยันกับผู้ออกสลาก (หวยไทยอาจเลื่อนเมื่อติดวันหยุด) — ตรวจกับประกาศจริงแล้วแก้ให้ตรง · ถ้าต้องการเตือนแม้ปิดแอป ใช้ NOTIFY_WEBHOOK ของบอท (ดู README)</div>
         <button class="${BS} w-full" onclick="A.testRemind()">ทดสอบการเตือน</button>` : ''}</div>
-      <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🌐 ดึงผลจากเว็บโดยตรง</div><div class="text-xs text-slate-500">ฮานอย (xosominhngoc.com) · ลาว (lottery.kapook.com)</div></div>${tg('web', S.set.web !== false).replace("A.toggle('web')", 'A.toggleWeb()')}</div>
+      <div class="${CARD} space-y-2"><div class="flex justify-between items-center"><div><div class="font-semibold text-sm">🌐 ดึงผลจากเว็บโดยตรง</div><div class="text-xs text-slate-500">ฮานอย (xosodaiphat.com สำรอง xosominhngoc.com) · ลาว (lottery.kapook.com)</div></div>${tg('web', S.set.web !== false).replace("A.toggle('web')", 'A.toggleWeb()')}</div>
         <div class="text-xs text-slate-500 leading-relaxed">เบราว์เซอร์อ่านเว็บอื่นตรง ๆ ไม่ได้ จึงต้องผ่านพร็อกซี — ทางที่เสถียรคือพร็อกซีของคุณเอง (Cloudflare Worker ฟรี ดู cf-worker.js ในชุดบอท) ใส่ URL ตามรูปแบบ <code>https://ชื่อคุณ.workers.dev/?url={url}</code></div>
         <input class="${INP} text-sm" value="${esc(S.set.proxy || '')}" onchange="A.setProxy(this.value)" placeholder="https://ชื่อคุณ.workers.dev/?url={url}">
         <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label></div>
@@ -902,7 +970,7 @@ const VIEWS = {
     return `<div class="space-y-3">${secTitle('ℹ️ เกี่ยวกับ LottoSnap')}
       <div class="${CARD} bg-amber-50 dark:bg-amber-900/20 text-sm leading-relaxed"><b>ข้อความปฏิเสธความรับผิดชอบ</b><br>LottoSnap เป็นแอป <b>ฟรี</b> สำหรับ <b>ตรวจผลรางวัลเท่านั้น</b> ไม่มีการซื้อขายสลาก ไม่รับพนัน ไม่ทำนายผลรางวัลใด ๆ (ส่วน “สายมู” เป็นเนื้อหาเพื่อความบันเทิง ไม่มีผลต่อการออกรางวัล) ข้อมูลจาก API/การอ่านภาพอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการของผู้ออกสลากทุกครั้งก่อนดำเนินการใด ๆ ผู้พัฒนาไม่รับผิดชอบความเสียหายจากการใช้ข้อมูลในแอป สถิติย้อนหลังไม่ช่วยทำนายผลรางวัล</div>
       <div class="${CARD} text-sm space-y-2"><b>วิธีทำงาน</b><ul class="list-disc pl-5 space-y-1"><li>ถ่ายภาพ/อัปโหลดสลาก → อ่าน QR (jsQR) และตัวเลข 0-9 (Tesseract.js) โดยไม่สลับลำดับ</li><li>ทุกเลขต้องให้คุณตรวจ/แก้ไขก่อนกดตรวจผล</li><li>1 ใบถูกได้หลายรางวัลพร้อมกัน เช่น รางวัลที่ 5 + เลขท้าย 2 ตัว</li><li>ข้อมูลทั้งหมดเก็บในเครื่องของคุณ ภาพไม่ถูกอัปโหลดไปไหน (OCR ทำงานบนเบราว์เซอร์)</li></ul></div>
-      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ฮานอย: xosominhngoc.com · ลาว: lottery.kapook.com (ดึงผ่านบอท/พร็อกซีของคุณ หรือกรอกเองได้)</li></ul></div>
+      <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ลาว + ฮานอย (ปกติ/พิเศษ/VIP/เฉพาะกิจ): <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://xn--t3cmiit.com">ผลหวย.com</a> (API ฟรี) — ผลอ้างอิงประกาศของผู้ออกรางวัล การขึ้นเงินรางวัลต้องยึดประกาศทางการเท่านั้น</li><li>ฮานอย: xosodaiphat.com (สำรอง xosominhngoc.com) · ลาว: lottery.kapook.com (ดึงผ่านบอท/พร็อกซีของคุณ หรือกรอกเองได้)</li></ul></div>
       <div class="text-xs text-center text-slate-500">LottoSnap v1.0</div></div>`;
   }
 };
