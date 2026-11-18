@@ -92,6 +92,7 @@ const CARD = 'rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dar
 const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.add('hidden'), 3200) };
 
 /* ---------- ชนิดหวย ---------- */
+const LAO_NAME = { l6: 'เลข 6 ตัว', l4: 'เลขท้าย 4 ตัว', l3: 'เลขท้าย 3 ตัว', l2: 'เลขท้าย 2 ตัว' };
 const LOTTO = {
   thai:   { name: 'หวยรัฐบาลไทย', icon: '🇹🇭', len: [6], max: 6 },
   lao:    { name: 'หวยลาว', icon: '🇱🇦', len: [6, 4, 3, 2], max: 6 },
@@ -239,7 +240,6 @@ async function loadHome() {
   render();
 }
 /* ผลหวยชนิดอื่นจากบอทของคุณ: GET {api}/other/{lao|hanoi} → {date, groups:[…]} */
-const LAO_NAME = { l6: 'เลข 6 ตัว', l4: 'เลขท้าย 4 ตัว', l3: 'เลขท้าย 3 ตัว', l2: 'เลขท้าย 2 ตัว' };
 const cleanGroups = gs => (Array.isArray(gs) ? gs : []).filter(g => g && typeof g === 'object' && Array.isArray(g.numbers) && g.id !== 'l2b').map(g => ({
   id: String(g.id || '').slice(0, 40), name: LAO_NAME[g.id] || String(g.name || '').slice(0, 80), match: ['full', 'last', 'first'].includes(g.match) ? g.match : 'full',
   reward: Number.isFinite(+g.reward) ? +g.reward : 0, numbers: g.numbers.map(n => String(n).replace(/\D/g, '').slice(0, 12)).filter(Boolean).slice(0, 200) })).filter(g => g.id);   // กันข้อมูลจากบอท/เว็บรูปแบบเพี้ยนทำให้หน้าจอพัง
