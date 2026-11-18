@@ -416,19 +416,24 @@ async function loadApi(lot) {   // คืนจำนวนงวดที่ด
 async function loadWeb(lot) {
   const W = WEB[lot]; if (!W || S.set.web === false || S.webBusy[lot]) return;
   S.webBusy[lot] = true; S.webErr[lot] = null; if (S.lottery === lot) render();
-  let primaryErr = null;
-  try {
-    if (!(W.url || W.srcs || W.dated)) throw Object.assign(new Error('-'), { skip: true });
-    if (W.url) { const t = await webText(W.url), r = W.parse(t); if (!r.date) throw new Error('อ่านวันที่งวดไม่ได้ จึงไม่บันทึก'); saveWeb(lot, r.date, r.groups) }
-    else {
-      const now = ictNow(); let got = null, last;
-      for (let i = 0; i < 7 && !got; i++) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i); try { got = await webDraw(lot, d) } catch (e) { last = e; if (e.net) break } }
-      if (!got) throw last || new Error('ยังไม่พบผลล่าสุด');
-      saveWeb(lot, got.date, got.groups);
-    }
-  } catch (e) { if (!e.skip) primaryErr = e }
-  try { const n = await loadApi(lot); if (n) primaryErr = null; else if (primaryErr && S.apiAt[lot] && (S.mres[lot] || []).length) primaryErr = null } catch (e) { if (!primaryErr || e.skip) primaryErr = e }
-  S.webErr[lot] = primaryErr ? primaryErr.message : null;
+  let err = null;
+  // 1) API ผลหวย.com ก่อน (เรียกตรงได้ ไม่ติด CORS)
+  try { await loadApi(lot) } catch (e) { err = e }
+  // 2) เว็บต้นทางผ่านพร็อกซี: ลองเฉพาะเมื่อ API ไม่ให้ผล หรือผู้ใช้ตั้งพร็อกซีของตัวเองไว้ (พร็อกซีสาธารณะมักถูกบล็อก ทำให้ช้าและมี error เต็มหน้าจอ)
+  const hasText = W.url || W.srcs || W.dated, own = (S.set.proxy || '').includes('{url}'), haveApi = !err && S.apiAt[lot] && (S.mres[lot] || []).length;
+  if (hasText && (own || !haveApi)) {
+    try {
+      if (W.url) { const t = await webText(W.url), r = W.parse(t); if (!r.date) throw new Error('อ่านวันที่งวดไม่ได้ จึงไม่บันทึก'); saveWeb(lot, r.date, r.groups) }
+      else {
+        const now = ictNow(); let got = null, last;
+        for (let i = 0; i < 7 && !got; i++) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i); try { got = await webDraw(lot, d) } catch (e) { last = e; if (e.net) break } }
+        if (!got) throw last || new Error('ยังไม่พบผลล่าสุด');
+        saveWeb(lot, got.date, got.groups);
+      }
+      err = null;
+    } catch (e) { err = err || e }
+  }
+  S.webErr[lot] = err ? err.message : null;
   S.webBusy[lot] = false; S.lastCheck = null; if (S.lottery === lot) render();
 }
 async function loadWebHistory(lot, days) {
