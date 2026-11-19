@@ -73,7 +73,7 @@ const AD_CONFIG = {
     el.innerHTML = '<div class="p-6 text-slate-500 text-sm">[พื้นที่โฆษณา — ' + place + ']<br>วางโค้ดโฆษณาใน AD_CONFIG.mount()</div>';
   }
 };
-const DEFAULT_API = ''; // ว่าง = ใช้ชุดข้อมูลชุมชนในตัว | หรือ URL ของบอท/API ที่มี /latest /list/{หน้า} /lotto/{id} /other/{ชนิด}
+const DEFAULT_API = 'https://phanuchita2522-sketch.github.io/lottobot-Public-'; // บอทของเจ้าของแอป (ทุกเครื่องได้ผลชุดเดียวกัน รวมเลข 6 หลักของลาว) | // ว่าง = ใช้ชุดข้อมูลชุมชนในตัว | หรือ URL ของบอท/API ที่มี /latest /list/{หน้า} /lotto/{id} /other/{ชนิด}
 
 /* ---------- Utils ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -159,7 +159,7 @@ function normThai(j, id) {
   return { lottery: 'thai', date: r.date || '', id: id || r.id || r.endpoint || '', groups, source: 'api' };
 }
 function netErr(err) { const net = err && (err.name === 'AbortError' || err instanceof TypeError || /Failed to fetch|NetworkError/i.test(err.message)); return net ? 'เชื่อมต่อแหล่งข้อมูลไม่ได้ (ออฟไลน์ / ถูกบล็อก / เซิร์ฟเวอร์ล่ม)' : (err ? err.message : 'ไม่ทราบสาเหตุ') }
-const bases = () => { const b = (S.set.api || '').trim().replace(/\/+$/, ''); return b ? [b] : [] };
+const bases = () => { const b = ((S.set.api || '').trim() || DEFAULT_API).replace(/\/+$/, ''); return b ? [b] : [] };
 async function jget(path) { // path เริ่มด้วย "/" — ลองแหล่งที่ตั้งไว้ก่อน แล้วค่อยลองค่าเริ่มต้น
   let err;
   if (!bases().length) throw new Error('ยังไม่ได้ตั้งแหล่งข้อมูลส่วนตัว');
@@ -200,7 +200,7 @@ function fromDS(d) {
   if (!ok('prizeFirst', 6) || !ok('runningNumberBackTwo', 2)) throw new Error('ข้อมูลงวด ' + d.draw_date + ' ไม่ครบ');
   return { lottery: 'thai', date: d.draw_date_th || thaiDateISO(d.draw_date), id: d.draw_date, groups, source: 'dataset' };
 }
-const customApi = () => (S.set.api || '').trim();
+const customApi = () => (S.set.api || '').trim() || DEFAULT_API;
 async function loadLatest() {   // บอทอาจค้างงวดเก่า / ชุดข้อมูลชุมชนอาจช้า → เทียบวันที่แล้วใช้งวดที่ใหม่กว่า
   let best = null, last;
   const ts = r => (drawDate(r) || 0).valueOf();
@@ -244,13 +244,21 @@ const cleanGroups = gs => (Array.isArray(gs) ? gs : []).filter(g => g && typeof 
   id: String(g.id || '').slice(0, 40), name: LAO_NAME[g.id] || String(g.name || '').slice(0, 80), match: ['full', 'last', 'first'].includes(g.match) ? g.match : 'full',
   reward: Number.isFinite(+g.reward) ? +g.reward : 0, numbers: g.numbers.map(n => String(n).replace(/\D/g, '').slice(0, 12)).filter(Boolean).slice(0, 200) })).filter(g => g.id);   // กันข้อมูลจากบอท/เว็บรูปแบบเพี้ยนทำให้หน้าจอพัง
 const okBot = (lot, groups, via) => lot !== 'lao' || via === 'api' || groups.some(g => g.id === 'l6' && /^\d{6}$/.test((g.numbers || [])[0] || ''));   // ลาวรุ่นเก่าไม่มีเลข 6 หลัก ตรวจโครงสร้างไม่ได้ (เคยหยิบปี 2569 เป็นผล) → ไม่รับ
+function upgradeRes(lot, ex, groups, via) {   // งวดเดียวกัน: ชุดจากบอทละเอียดกว่า (ลาวมีเลข 6 หลัก / ฮานอยมีรางวัลทางการ) และเลขหลักตรงกัน → แทนที่ผลเดิมที่ไม่ใช่ที่ผู้ใช้กรอกเอง
+  if (!ex || ex.source === 'manual' || groups.length <= (ex.groups || []).length) return false;
+  const key = lot === 'lao' ? 'l4' : 'h3', gn = gs => ((gs.find(g => g.id === key) || {}).numbers || [])[0];
+  if (!gn(groups) || gn(groups) !== gn(ex.groups || [])) return false;
+  ex.groups = groups; ex.source = 'bot'; if (via === 'api') ex.via = 'api'; else delete ex.via; return true;
+}
 async function loadOtherApi(lot) {
   if (lot === 'thai' || !customApi()) return;
   try {
     try {   // ประวัติย้อนหลังที่บอทสะสมไว้ (ไม่มีไฟล์ = ข้ามเงียบ ๆ)
       const hs = await jget('/other/' + lot + '-history');
       if (hs && Array.isArray(hs.draws)) {
-        const have = new Set((S.mres[lot] || []).map(r => r.date));
+        const have = new Set((S.mres[lot] || []).map(r => r.date)); let upg = 0;
+        for (const d of hs.draws) if (d && typeof d.date === 'string' && have.has(d.date) && Array.isArray(d.groups) && okBot(lot, d.groups, d.via) && upgradeRes(lot, (S.mres[lot] || []).find(r => r.date === d.date), cleanGroups(d.groups), d.via)) upg++;
+        if (upg) { LS.set('mres', S.mres); if (S.lottery === lot) render() }
         const add = hs.draws.filter(d => d && typeof d.date === 'string' && d.date.length < 40 && Array.isArray(d.groups) && okBot(lot, d.groups, d.via) && !have.has(d.date) && !(S.del[lot] || []).includes(d.date)).map(d => ({ lottery: lot, date: d.date, id: 'bot-' + d.date, groups: cleanGroups(d.groups), source: 'bot', ...(d.via === 'api' ? { via: 'api' } : {}) })).filter(r => r.groups.length);
         if (add.length) {
           S.mres[lot] = [...(S.mres[lot] || []), ...add].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);
@@ -261,6 +269,7 @@ async function loadOtherApi(lot) {
     const j = await jget('/other/' + lot); if (j && typeof j.date === 'string') j.date = j.date.slice(0, 40); if (j) j.groups = cleanGroups(j.groups);
     if (!j || !Array.isArray(j.groups) || !j.groups.length || !okBot(lot, j.groups, j.via) || (S.del[lot] || []).includes(j.date)) return;
     const cur = (S.mres[lot] || []).find(r => r.date === j.date) || (S.mres[lot] || [])[0];
+    if (cur && cur.date === j.date && upgradeRes(lot, cur, j.groups, j.via)) { LS.set('mres', S.mres); if (S.lottery === lot) render(); return }
     if (cur && (cur.date === j.date || JSON.stringify(cur.groups) === JSON.stringify(j.groups))) return;
     const res = { lottery: lot, date: j.date || '', id: 'bot-' + Date.now(), groups: j.groups, source: 'bot', ...(j.via === 'api' ? { via: 'api' } : {}) };
     S.mres[lot] = [res, ...(S.mres[lot] || [])].sort((a, b) => (drawDate(b) || 0) - (drawDate(a) || 0)).slice(0, 120); LS.set('mres', S.mres);   // เรียงตามวันที่ ไม่ให้งวดเก่าขึ้นมาอยู่หน้าสุด
