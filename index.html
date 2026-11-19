@@ -49,7 +49,7 @@
 <main id="view" class="max-w-3xl mx-auto px-3 py-4 pb-32"></main>
 
 <nav id="nav" class="fixed bottom-0 inset-x-0 z-30 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
-  <div class="max-w-3xl mx-auto grid grid-cols-5 text-center text-[11px]" style="padding-bottom:env(safe-area-inset-bottom)"></div>
+  <div class="max-w-3xl mx-auto grid grid-cols-4 text-center text-[11px]" style="padding-bottom:env(safe-area-inset-bottom)"></div>
 </nav>
 
 <div id="modal"></div>
@@ -857,8 +857,8 @@ const VIEWS = {
     return `<div class="space-y-4">${hero}
       <div class="flex flex-wrap gap-2">${r ? `<button class="${BP}" onclick="go('results')">ดูผลทั้งหมด</button>` : ''}${r && r.source !== 'demo' ? `<button class="${BS}" onclick="A.shareResult()">📤 แชร์ผล</button>` : ''}<button class="${BS}" onclick="A.picker()">📅 ตรวจงวดย้อนหลัง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div>
       ${r ? `<details open><summary class="font-bold cursor-pointer mb-2">ผลรางวัลทั้งหมด — ${LOTTO[S.lottery].name} งวด ${esc(r.date || '')}</summary><div class="grid gap-2">${groupChips(r)}</div></details>` : ''}
-      <div><div class="font-bold mb-2">ทางลัด</div><div class="grid grid-cols-4 gap-2">
-        ${[["go('camera')", '📷', 'ถ่ายภาพจากกล้อง'], ["go('gallery')", '🖼️', 'อัปโหลดรูป'], ["go('results')", '⌨️', 'กรอกตัวเลข'], ["go('results');Voice.open()", '🎤', 'ใช้เสียง']].map(([fn, i, n]) => `<button onclick="${fn}" class="${CARD} !p-2 text-center active:scale-95 transition"><div class="text-2xl">${i}</div><div class="text-[11px] font-semibold mt-1 leading-tight">${n}</div></button>`).join('')}</div></div>
+      <div><div class="font-bold mb-2">ทางลัด</div><div class="grid grid-cols-3 gap-2">
+        ${[["go('camera')", '📷', 'ถ่ายภาพจากกล้อง'], ["go('results')", '⌨️', 'กรอกตัวเลข'], ["go('results');Voice.open()", '🎤', 'ใช้เสียง']].map(([fn, i, n]) => `<button onclick="${fn}" class="${CARD} !p-2 text-center active:scale-95 transition"><div class="text-2xl">${i}</div><div class="text-[11px] font-semibold mt-1 leading-tight">${n}</div></button>`).join('')}</div></div>
       <button onclick="go('lucky')" class="${CARD} w-full flex items-center gap-3 text-left active:scale-[.99] transition"><div class="text-3xl">🔮</div><div class="flex-1"><div class="font-semibold">สายมู — เลขมงคลวันนี้ & ทำนายฝัน</div><div class="text-xs text-slate-500">เปิดดูได้ทุกวัน · เพื่อความบันเทิง</div></div><div class="text-slate-400">›</div></button>
       <div><div class="flex justify-between items-center mb-2"><div class="font-bold">ประวัติล่าสุด</div><button class="text-xs text-teal-600" onclick="go('history')">ดูทั้งหมด</button></div><div class="space-y-2">${recent}</div></div>${inviteCard()}</div>${disc()}`;
   },
@@ -870,13 +870,6 @@ const VIEWS = {
         <div id="camOn" class="hidden absolute inset-0 pointer-events-none"><div class="absolute inset-x-6 top-1/3 h-1/3 border-2 border-emerald-400 rounded-xl"></div><div class="absolute bottom-2 inset-x-0 text-center text-xs text-white/90">จัดเลขบนสลากให้อยู่ในกรอบ · QR จะถูกอ่านอัตโนมัติ</div></div></div>
       <div id="camOnBtns" class="flex gap-2"><button class="${BP} flex-1" onclick="Cam.shot()">📸 ถ่าย + อ่านเลข</button><button class="${BS}" onclick="Cam.flip()">🔄</button><button class="${BS}" onclick="Cam.stop()">ปิดกล้อง</button></div>
       <div id="prog"></div><div id="cands">${candsHTML()}</div></div>${disc()}`;
-  },
-  gallery() {
-    return `<div class="space-y-3">${secTitle('🖼️ อัปโหลดรูปสลาก')}
-      <label class="${CARD} block text-center border-dashed cursor-pointer" ondragover="event.preventDefault()" ondrop="event.preventDefault();A.files(event.dataTransfer.files)">
-        <div class="text-4xl">⬆️</div><div class="font-semibold">เลือกรูป (ได้หลายไฟล์) หรือลากมาวาง</div><div class="text-xs text-slate-500">ใช้ OCR + QR เหมือนหน้ากล้อง</div>
-        <input type="file" accept="image/*" multiple class="hidden" onchange="A.files(this.files);this.value=''"></label>
-      <div id="thumbs" class="flex gap-2 overflow-x-auto sb-hide"></div><div id="prog"></div><div id="cands">${candsHTML()}</div></div>${disc()}`;
   },
   results() {
     const L = LOTTO[S.lottery], r = curResult();
@@ -899,7 +892,7 @@ const VIEWS = {
       ${resultNotice(r)}
       <div class="${CARD} !p-3 flex items-center justify-between gap-2"><div class="text-sm"><div class="font-semibold">${L.icon} ${L.name}</div><div class="text-slate-500 text-xs">${r ? 'งวด ' + esc(r.date || '—') : 'ยังไม่มีผลรางวัล'}</div></div><div class="flex gap-2"><button class="${BS}" onclick="A.picker()">เปลี่ยนงวด</button><button class="${BS}" onclick="A.editResult()">✍️</button></div></div>
       <div class="${CARD} space-y-2"><div class="font-bold">เลขสลาก <span class="text-xs font-normal text-slate-500">(สูงสุด 10 ใบ)</span></div>${rows}
-        <div class="flex flex-wrap gap-2 pt-1"><button class="${BS}" onclick="A.tAdd()" ${S.tickets.length >= 10 ? 'disabled' : ''}>+ เพิ่มใบ</button><button class="${BS}" onclick="Voice.open()">🎤 พูดเลข</button><button class="${BS}" onclick="go('camera')">📷</button><button class="${BS}" onclick="go('gallery')">🖼️</button><button class="${BS}" onclick="A.tClear()">ล้าง</button></div>
+        <div class="flex flex-wrap gap-2 pt-1"><button class="${BS}" onclick="A.tAdd()" ${S.tickets.length >= 10 ? 'disabled' : ''}>+ เพิ่มใบ</button><button class="${BS}" onclick="Voice.open()">🎤 พูดเลข</button><button class="${BS}" onclick="go('camera')">📷</button><button class="${BS}" onclick="A.tClear()">ล้าง</button></div>
         <button class="${BP} w-full !py-3 text-base" onclick="A.check()">🔍 ตรวจผลทั้งหมด</button></div>
       ${res}
       ${r && r.source !== 'demo' ? `<button class="${BS} w-full" onclick="A.shareResult()">📤 แชร์ผลรางวัลนี้ให้เพื่อน (LINE / Facebook)</button>` : ''}
@@ -984,7 +977,7 @@ const VIEWS = {
   about() {
     return `<div class="space-y-3">${secTitle('ℹ️ เกี่ยวกับ LottoSnap')}
       <div class="${CARD} bg-amber-50 dark:bg-amber-900/20 text-sm leading-relaxed"><b>ข้อความปฏิเสธความรับผิดชอบ</b><br>LottoSnap เป็นแอป <b>ฟรี</b> สำหรับ <b>ตรวจผลรางวัลเท่านั้น</b> ไม่มีการซื้อขายสลาก ไม่รับพนัน ไม่ทำนายผลรางวัลใด ๆ (ส่วน “สายมู” เป็นเนื้อหาเพื่อความบันเทิง ไม่มีผลต่อการออกรางวัล) ข้อมูลจาก API/การอ่านภาพอาจคลาดเคลื่อน โปรดยืนยันกับประกาศอย่างเป็นทางการของผู้ออกสลากทุกครั้งก่อนดำเนินการใด ๆ ผู้พัฒนาไม่รับผิดชอบความเสียหายจากการใช้ข้อมูลในแอป สถิติย้อนหลังไม่ช่วยทำนายผลรางวัล</div>
-      <div class="${CARD} text-sm space-y-2"><b>วิธีทำงาน</b><ul class="list-disc pl-5 space-y-1"><li>ถ่ายภาพ/อัปโหลดสลาก → อ่าน QR (jsQR) และตัวเลข 0-9 (Tesseract.js) โดยไม่สลับลำดับ</li><li>ทุกเลขต้องให้คุณตรวจ/แก้ไขก่อนกดตรวจผล</li><li>1 ใบถูกได้หลายรางวัลพร้อมกัน เช่น รางวัลที่ 5 + เลขท้าย 2 ตัว</li><li>ข้อมูลทั้งหมดเก็บในเครื่องของคุณ ภาพไม่ถูกอัปโหลดไปไหน (OCR ทำงานบนเบราว์เซอร์)</li></ul></div>
+      <div class="${CARD} text-sm space-y-2"><b>วิธีทำงาน</b><ul class="list-disc pl-5 space-y-1"><li>ถ่ายภาพสลาก → อ่าน QR (jsQR) และตัวเลข 0-9 (Tesseract.js) โดยไม่สลับลำดับ</li><li>ทุกเลขต้องให้คุณตรวจ/แก้ไขก่อนกดตรวจผล</li><li>1 ใบถูกได้หลายรางวัลพร้อมกัน เช่น รางวัลที่ 5 + เลขท้าย 2 ตัว</li><li>ข้อมูลทั้งหมดเก็บในเครื่องของคุณ ภาพไม่ถูกอัปโหลดไปไหน (OCR ทำงานบนเบราว์เซอร์)</li></ul></div>
       <div class="${CARD} text-sm space-y-2"><b>แหล่งข้อมูลผลรางวัล</b><ul class="list-disc pl-5 space-y-1"><li>หวยไทย: ชุดข้อมูลชุมชน <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/huayreview/thai-lottery-results">huayreview/thai-lottery-results</a> (CC BY 4.0, ที่มา huayreview.net และประกาศของ สลก.) อัปเดตตามผู้ดูแลชุดข้อมูล อาจล่าช้ากว่าประกาศจริง — ตรวจกับ glo.or.th ทุกครั้ง หรือใช้บอทส่วนตัวของคุณ</li><li>ค้นหา API เพิ่มเติม: <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://github.com/topics/lottery-api?l=javascript">GitHub Topics: lottery-api</a></li><li>ลาว + ฮานอย (ปกติ/พิเศษ/VIP/เฉพาะกิจ): <a class="text-teal-600 underline" target="_blank" rel="noopener" href="https://xn--t3cmiit.com">ผลหวย.com</a> (API ฟรี) — ผลอ้างอิงประกาศของผู้ออกรางวัล การขึ้นเงินรางวัลต้องยึดประกาศทางการเท่านั้น</li><li>ฮานอย: xosodaiphat.com (สำรอง xosominhngoc.com) · ลาว: lottery.kapook.com (ดึงผ่านบอท/พร็อกซีของคุณ หรือกรอกเองได้)</li></ul></div>
       <div class="text-xs text-center text-slate-500">LottoSnap v1.0</div></div>`;
   }
@@ -1211,7 +1204,14 @@ const A = {
     S.shareRes = r; openShare('แชร์ผลรางวัล', resultText(r), true);
   },
   invite() { S.shareRes = null; openShare('ชวนเพื่อนใช้ LottoSnap', inviteText(), false) },
-  shLine() { window.open('https://line.me/R/msg/text/?' + encodeURIComponent(S.share.text), '_blank', 'noopener,noreferrer') },   // noreferrer: ไม่ให้ LINE เห็นเว็บต้นทาง (เคยมีลิงก์ราก github.io ต่อท้ายข้อความ → 404)
+  async shLine() {
+    const txt = S.share.text, u = appUrl(), mob = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (mob) { window.open('https://line.me/R/msg/text/?' + encodeURIComponent(txt), '_blank', 'noopener,noreferrer'); return }   // มือถือ: เปิดแอป LINE พร้อมข้อความ (noreferrer: ไม่ให้ LINE เติมลิงก์เว็บต้นทาง)
+    // คอม: line.me/R/msg/text พาไปหน้าแชร์เปล่า ๆ (url=) จึงใช้ปลั๊กอินแชร์ของ LINE ที่ต้องมี url + คัดลอกข้อความไว้ให้วางเองเผื่อช่องข้อความไม่เติมให้
+    const cp = clip(txt), body = txt.split(u).join('').replace(/\n{3,}/g, '\n\n').trim();
+    window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(body), '_blank', 'noopener,noreferrer');
+    toast(await cp ? 'คัดลอกข้อความแล้ว — ถ้าช่องข้อความใน LINE ว่าง ให้กดวางได้เลย' : 'เปิด LINE แล้ว (คัดลอกอัตโนมัติไม่ได้ กรุณาคัดลอกข้อความเอง)');
+  },
   async shFb() {
     const u = appUrl(), cp = clip(S.share.text);   // เปิดหน้าต่างทันทีในจังหวะที่ผู้ใช้กดปุ่ม (ถ้ารอ clipboard ก่อน iOS/Safari จะบล็อกป๊อปอัป)
     window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank', 'noopener,noreferrer');
@@ -1310,7 +1310,7 @@ function applyTheme() {
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.style.fontSize = (16 * S.set.scale) + 'px';
 }
-const NAV = [['home', '🏠', 'หน้าแรก'], ['camera', '📷', 'กล้อง'], ['gallery', '🖼️', 'แกลเลอรี'], ['results', '✅', 'ตรวจผล'], ['history', '📊', 'ประวัติ']];
+const NAV = [['home', '🏠', 'หน้าแรก'], ['camera', '📷', 'กล้อง'], ['results', '✅', 'ตรวจผล'], ['history', '📊', 'ประวัติ']];
 function chrome() {
   const fam = (LOTTO[S.lottery] || {}).sub || S.lottery, chip = (k, label, on) => `<button onclick="A.setLot('${k}')" class="chip border shrink-0 ${on ? 'bg-white text-teal-800 border-white' : 'bg-white/10 text-white border-white/30'}">${label}</button>`;
   const SUBORDER = ['hanoi_ex', 'hanoi_sp', 'hanoi', 'hanoi_vip'], subs = fam === 'hanoi' ? SUBORDER : [];
