@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LottoSnap — ตรวจผลรางวัลฟรี</title>
 <meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LottoSnap">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta property="og:title" content="LottoSnap — ตรวจผลรางวัลฟรี">
 <meta property="og:description" content="ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจได้หลายใบพร้อมกัน ฟรี ไม่มีการซื้อขายหรือพนัน">
 <meta name="description" content="ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจหวยรัฐบาลไทย ลาว ฮานอย ฟรี ไม่มีการซื้อขายหรือพนัน">
@@ -621,18 +627,64 @@ function openModal(html, dismiss = true) {
   $('#modal').innerHTML = `<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3" ${dismiss ? 'onclick="if(event.target===this)closeModal()"' : ''}><div class="w-full max-w-lg max-h-[90vh] overflow-auto rounded-2xl bg-white dark:bg-slate-800 p-4 shadow-xl">${html}</div></div>`;
 }
 const closeModal = () => { $('#modal').innerHTML = '' };
-/* AdMob (เฉพาะเมื่อห่อเป็นแอปมือถือด้วย Capacitor + @capacitor-community/admob — บนเว็บธรรมดาใช้ไม่ได้)
-   adUnitId ด้านล่างเป็น "รหัสทดสอบ" ของ Google — ห้ามใช้รหัสจริงจนกว่าจะอ่าน ADS.md และตรวจนโยบายแล้ว */
-const ADMOB = { interstitial: 'ca-app-pub-3940256099942544/1033173712' /* test ID */, useTestAds: true };
+/* AdMob (ใช้ได้เฉพาะเมื่อห่อเป็นแอปมือถือด้วย Capacitor + @capacitor-community/admob — บนเว็บ/PWA ไม่มีโฆษณา AdMob)
+   useTestAds = true → ใช้รหัสทดสอบของ Google ทั้งหมด (ปลอดภัย) · ตอนปล่อยจริงเปลี่ยนเป็น false เท่านั้น
+   ห้ามกดโฆษณาจริงของตัวเองระหว่างพัฒนา (ผิดนโยบาย AdMob บัญชีอาจถูกระงับ) */
+const ADMOB = {
+  useTestAds: true,
+  banner: 'ca-app-pub-4208653475764902/2964083959',
+  interstitial: 'ca-app-pub-4208653475764902/4619820097',
+  rewarded: 'ca-app-pub-4208653475764902/7222661657',
+  test: {   // รหัสทดสอบอย่างเป็นทางการของ Google (แยก Android / iOS)
+    android: { banner: 'ca-app-pub-3940256099942544/6300978111', interstitial: 'ca-app-pub-3940256099942544/1033173712', rewarded: 'ca-app-pub-3940256099942544/5224354917' },
+    ios: { banner: 'ca-app-pub-3940256099942544/2934735716', interstitial: 'ca-app-pub-3940256099942544/4411468910', rewarded: 'ca-app-pub-3940256099942544/1712485313' }
+  }
+};
+const adPlugin = () => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) || null;
+const isNativeApp = () => !!(window.Capacitor && typeof Capacitor.isNativePlatform === 'function' && Capacitor.isNativePlatform());
+const adUnit = k => ADMOB.useTestAds ? ADMOB.test[(window.Capacitor && Capacitor.getPlatform && Capacitor.getPlatform()) === 'ios' ? 'ios' : 'android'][k] : ADMOB[k];
+let adInitP = null;
+const adInit = () => adInitP || (adInitP = adPlugin().initialize({ initializeForTesting: ADMOB.useTestAds }).catch(e => { adInitP = null; throw e }));
 async function nativeInterstitial() {
-  const P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
-  if (!P) return null;
+  const P = adPlugin(); if (!P) return null;
   try {
-    await P.initialize({ initializeForTesting: ADMOB.useTestAds });
-    await P.prepareInterstitial({ adId: ADMOB.interstitial, isTesting: ADMOB.useTestAds });
+    await adInit();
+    await P.prepareInterstitial({ adId: adUnit('interstitial'), isTesting: ADMOB.useTestAds });
     await P.showInterstitial();
     return true;
   } catch (e) { return null; }   // โฆษณาโหลดไม่ได้ → ใช้กล่องโฆษณาเว็บแทน (ไม่ขวางผู้ใช้)
+}
+async function nativeBanner() {   // แบนเนอร์ล่างจอ เหนือแถบเมนู (เฉพาะแอปมือถือ)
+  const P = adPlugin(); if (!P || !isNativeApp()) return;
+  try { await adInit(); await P.showBanner({ adId: adUnit('banner'), adSize: 'ADAPTIVE_BANNER', position: 'BOTTOM_CENTER', margin: 56, isTesting: ADMOB.useTestAds }) } catch (e) { }
+}
+/* โฆษณาให้รางวัล: ดูครบ 10 ครั้ง → เพิ่มจำนวนใบที่ตรวจได้ +5 ใบ · เริ่มต้น 10 ใบ สูงสุด 50 ใบ (เก็บในเครื่อง)
+   ปุ่มดูโฆษณาแสดงเฉพาะแอปมือถือที่มี AdMob — บนเว็บ/PWA ไม่มีโฆษณาจริงให้ดู จึงคงที่ 10 ใบ */
+const REWARD = { views: 10, add: 5, base: 10, max: 50 };
+S.rw = Object.assign({ views: 0, bonus: 0 }, LS.get('reward', {}));
+const maxTickets = () => Math.min(REWARD.max, REWARD.base + Math.max(0, +S.rw.bonus || 0));
+const canEarnMore = () => maxTickets() < REWARD.max;
+function rewardCard() {
+  if (!adPlugin() || !isNativeApp() || !canEarnMore()) return '';
+  const v = Math.min(REWARD.views, Math.max(0, +S.rw.views || 0));
+  return `<div class="flex items-center justify-between gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 p-2 text-xs"><div>🎁 ดูโฆษณาครบ ${REWARD.views} ครั้ง เพิ่มจำนวนใบ +${REWARD.add} ใบ (ดูแล้ว ${v}/${REWARD.views} · ตรวจได้ ${maxTickets()} ใบ สูงสุด ${REWARD.max})</div><button class="${BS} shrink-0" onclick="A.watchReward()">▶ ดูโฆษณา</button></div>`;
+}
+async function watchReward() {
+  const P = adPlugin(); if (!P || !isNativeApp()) return toast('ดูโฆษณาได้เฉพาะในแอปมือถือ');
+  if (!canEarnMore()) return toast('ตรวจได้สูงสุด ' + REWARD.max + ' ใบแล้ว');
+  let rewarded = false, h = null;
+  try {
+    await adInit();
+    h = await P.addListener('onRewardedVideoAdReward', () => { rewarded = true });
+    await P.prepareRewardVideoAd({ adId: adUnit('rewarded'), isTesting: ADMOB.useTestAds });
+    const r = await P.showRewardVideoAd(); if (r && (r.amount > 0 || r.type)) rewarded = true;
+  } catch (e) { if (!rewarded) toast('โหลดโฆษณาไม่ได้ ลองใหม่อีกครั้งภายหลัง') }
+  finally { try { h && h.remove && await h.remove() } catch (e) { } }
+  if (!rewarded) return;
+  S.rw.views = (+S.rw.views || 0) + 1;
+  if (S.rw.views >= REWARD.views) { S.rw.views = 0; S.rw.bonus = Math.min(REWARD.max - REWARD.base, (+S.rw.bonus || 0) + REWARD.add); toast('🎉 เพิ่มจำนวนใบแล้ว ตรวจได้ ' + maxTickets() + ' ใบ') }
+  else toast('ดูแล้ว ' + S.rw.views + '/' + REWARD.views + ' ครั้ง');
+  LS.set('reward', S.rw); render();
 }
 async function adGate(place) {
   if (!AD_CONFIG.enabled) return true;
@@ -818,7 +870,7 @@ function addTickets(list, src) {
   S.tickets = S.tickets.filter(t => t.v);
   let n = 0;
   for (const v of list) {
-    if (S.tickets.length >= 10) { toast('ตรวจได้สูงสุด 10 ใบ'); break }
+    if (S.tickets.length >= maxTickets()) { toast('ตรวจได้สูงสุด ' + maxTickets() + ' ใบ'); break }
     S.tickets.push({ v: String(v).replace(/\D/g, '').slice(0, 12), src, ok: src === 'manual' }); n++;
   }
   if (!S.tickets.length) S.tickets.push({ v: '', src: 'manual', ok: true });
@@ -902,8 +954,8 @@ const VIEWS = {
     return `<div class="space-y-4">${secTitle('✅ ตรวจผลรางวัล')}
       ${resultNotice(r)}
       <div class="${CARD} !p-3 flex items-center justify-between gap-2"><div class="text-sm"><div class="font-semibold">${L.icon} ${L.name}</div><div class="text-slate-500 text-xs">${r ? 'งวด ' + esc(r.date || '—') : 'ยังไม่มีผลรางวัล'}</div></div><div class="flex gap-2"><button class="${BS}" onclick="A.picker()">เปลี่ยนงวด</button><button class="${BS}" onclick="A.editResult()">✍️</button></div></div>
-      <div class="${CARD} space-y-2"><div class="font-bold">เลขสลาก <span class="text-xs font-normal text-slate-500">(สูงสุด 10 ใบ)</span></div>${rows}
-        <div class="flex flex-wrap gap-2 pt-1"><button class="${BS}" onclick="A.tAdd()" ${S.tickets.length >= 10 ? 'disabled' : ''}>+ เพิ่มใบ</button><button class="${BS}" onclick="Voice.open()">🎤 พูดเลข</button><button class="${BS}" onclick="go('camera')">📷</button><button class="${BS}" onclick="A.tClear()">ล้าง</button></div>
+      <div class="${CARD} space-y-2"><div class="font-bold">เลขสลาก <span class="text-xs font-normal text-slate-500">(สูงสุด ${maxTickets()} ใบ)</span></div>${rewardCard()}${rows}
+        <div class="flex flex-wrap gap-2 pt-1"><button class="${BS}" onclick="A.tAdd()" ${S.tickets.length >= maxTickets() ? 'disabled' : ''}>+ เพิ่มใบ</button><button class="${BS}" onclick="Voice.open()">🎤 พูดเลข</button><button class="${BS}" onclick="go('camera')">📷</button><button class="${BS}" onclick="A.tClear()">ล้าง</button></div>
         <button class="${BP} w-full !py-3 text-base" onclick="A.check()">🔍 ตรวจผลทั้งหมด</button></div>
       ${res}
       ${r && r.source !== 'demo' ? `<button class="${BS} w-full" onclick="A.shareResult()">📤 แชร์ผลรางวัลนี้ให้เพื่อน (LINE / Facebook)</button>` : ''}
@@ -960,6 +1012,7 @@ const VIEWS = {
         <label class="flex items-start gap-2 text-xs"><input type="checkbox" class="accent-teal-600 w-4 h-4 mt-0.5" ${S.set.publicProxy !== false ? 'checked' : ''} onchange="A.toggle('publicProxy')"><span>ใช้พร็อกซีสาธารณะของบุคคลที่สามเป็นตัวสำรอง (ไม่เสถียร และผู้ให้บริการเห็น URL ของหน้าผลรางวัลที่ดึง — ไม่ส่งข้อมูลส่วนตัวของคุณ)</span></label></div>
       <div class="${CARD} space-y-2"><div class="font-semibold text-sm">แหล่งข้อมูลหวยไทย (API)</div><input class="${INP} text-sm" value="${esc(S.set.api)}" onchange="A.setApi(this.value)" placeholder="เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว">
         <div class="text-xs text-slate-500">เว้นว่าง = ใช้ชุดข้อมูลชุมชนในตัว (หวยไทยย้อนหลังทุกงวด) · ถ้ามีบอทของคุณเอง ใส่ URL ที่มี /latest /list/{หน้า} /lotto/{id} และ /other/{ชนิดหวย} สำหรับหวยอีก 4 ชนิด</div><div id="apitest" class="text-xs"></div><div class="flex gap-2"><button class="${BS}" onclick="A.testApi()">🔎 ทดสอบการเชื่อมต่อ</button><button class="${BS}" onclick="A.setApi('')">ใช้ชุดข้อมูลในตัว</button><button class="${BP}" onclick="S.lottery='thai';loadHome()">ทดสอบ/โหลดใหม่</button></div></div>
+      ${installCard()}
       <div class="${CARD} space-y-2"><div class="font-semibold text-sm">ลิงก์แอป (สำหรับแชร์/ชวนเพื่อน)</div><input class="${INP} text-sm" value="${esc(S.set.shareUrl || '')}" onchange="A.setShareUrl(this.value)" placeholder="https://ชื่อคุณ.github.io/lottosnap/"><div class="text-xs text-slate-500">ใส่ลิงก์เว็บที่คุณโฮสต์ไฟล์แอปนี้ไว้ เพื่อให้ข้อความแชร์และชวนเพื่อนแนบลิงก์ที่เพื่อนกดเข้าใช้ได้</div><button class="${BP} w-full" onclick="A.invite()">🤝 ชวนเพื่อนใช้ LottoSnap</button></div>
       <div class="${CARD} space-y-2"><button class="${BS} w-full" onclick="go('about')">ℹ️ เกี่ยวกับแอป</button><button class="${BD} w-full" onclick="A.wipe()">🗑️ ลบข้อมูลทั้งหมดในเครื่อง</button></div></div>${disc()}`;
   },
@@ -1049,6 +1102,18 @@ function resultText(r) {
   return lines.join('\n');
 }
 const inviteText = () => '🎟️ ตรวจหวยฟรีด้วย LottoSnap — ถ่ายรูปสลากแล้วรู้ผลทันที ตรวจได้หลายใบพร้อมกัน ไม่มีการซื้อขายและไม่มีพนัน' + (appUrl() ? '\n' + appUrl() : '');
+/* ติดตั้งเป็นแอป (PWA) — Android/Chrome มีปุ่มติดตั้งให้ · iPhone ต้องเพิ่มลงหน้าจอโฮมเอง */
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (S.view === 'settings') render() });
+window.addEventListener('appinstalled', () => { deferredInstall = null; toast('ติดตั้งแอปแล้ว'); if (S.view === 'settings') render() });
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const installCard = () => {
+  if (isStandalone()) return '';
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return `<div class="${CARD} space-y-2"><div class="font-semibold text-sm">📲 ติดตั้งเป็นแอปบนโทรศัพท์</div>
+    ${deferredInstall ? `<button class="${BP} w-full" onclick="A.installPwa()">ติดตั้งแอป LottoSnap</button>`
+      : `<div class="text-xs text-slate-500 leading-relaxed">${ios ? 'iPhone: เปิดหน้านี้ใน Safari → แตะปุ่มแชร์ (สี่เหลี่ยมมีลูกศรขึ้น) → "เพิ่มลงในหน้าจอโฮม"' : 'Android: เปิดใน Chrome → เมนู ⋮ → "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอหลัก"'}</div>`}</div>`;
+};
 const inviteCard = () => `<div class="${CARD} flex items-center justify-between gap-3"><div><div class="font-semibold">🤝 ชวนเพื่อนใช้ LottoSnap</div><div class="text-xs text-slate-500">ส่งลิงก์ผ่าน LINE / Facebook</div></div><button class="${BP}" onclick="A.invite()">ชวนเพื่อน</button></div>`;
 async function clip(t) {
   try { await navigator.clipboard.writeText(t); return true } catch (e) {
@@ -1125,7 +1190,7 @@ const A = {
   },
   /* tickets */
   tEdit(i, el) { const t = S.tickets[i]; t.v = el.value.replace(/\D/g, ''); if (el.value !== t.v) el.value = t.v },
-  tAdd() { if (S.tickets.length < 10) { S.tickets.push({ v: '', src: 'manual', ok: true }); render() } },
+  tAdd() { if (S.tickets.length < maxTickets()) { S.tickets.push({ v: '', src: 'manual', ok: true }); render() } },
   tDel(i) { S.tickets.splice(i, 1); if (!S.tickets.length) S.tickets.push({ v: '', src: 'manual', ok: true }); S.lastCheck = null; render() },
   tClear() { S.tickets = [{ v: '', src: 'manual', ok: true }]; S.lastCheck = null; render() },
   check() {
@@ -1214,6 +1279,8 @@ const A = {
     if (r.source === 'demo') return toast('ข้อมูลตัวอย่างแชร์ไม่ได้ — ไม่ใช่ผลรางวัลจริง');
     S.shareRes = r; openShare('แชร์ผลรางวัล', resultText(r), true);
   },
+  watchReward() { return watchReward() },
+  async installPwa() { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice } catch (e) { } deferredInstall = null; render() },
   invite() { S.shareRes = null; openShare('ชวนเพื่อนใช้ LottoSnap', inviteText(), false) },
   async shLine() {
     const txt = S.share.text, u = appUrl(), mob = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1354,6 +1421,11 @@ addEventListener('pagehide', () => Cam.stop(true));
   }
   if (S.lottery === 'thai') loadHome(); else loadOther(S.lottery);
 })();
+nativeBanner();   // แบนเนอร์ AdMob (เฉพาะแอปมือถือ — บนเว็บไม่ทำอะไร)
+// Service worker (เฉพาะ https/localhost — ไม่ทำงานเมื่อเปิดเป็นไฟล์) · ล้มเหลว = ข้ามเงียบ ๆ แอปทำงานได้ตามปกติ
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }) });
+}
 </script>
 </body>
 </html>
