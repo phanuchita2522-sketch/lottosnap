@@ -644,7 +644,15 @@ const adPlugin = () => (window.Capacitor && window.Capacitor.Plugins && window.C
 const isNativeApp = () => !!(window.Capacitor && typeof Capacitor.isNativePlatform === 'function' && Capacitor.isNativePlatform());
 const adUnit = k => ADMOB.useTestAds ? ADMOB.test[(window.Capacitor && Capacitor.getPlatform && Capacitor.getPlatform()) === 'ios' ? 'ios' : 'android'][k] : ADMOB[k];
 let adInitP = null;
-const adInit = () => adInitP || (adInitP = adPlugin().initialize({ initializeForTesting: ADMOB.useTestAds }).catch(e => { adInitP = null; throw e }));
+/* ขอความยินยอมโฆษณา (Google UMP) ก่อนเริ่มโฆษณา — จำเป็นสำหรับผู้ใช้ใน EEA/UK และแนะนำทั่วโลก; ถ้าขั้นตอนนี้ล้มเหลวจะไม่ขวางแอป */
+async function adConsent() {
+  const P = adPlugin(); if (!P || !P.requestConsentInfo) return;
+  try {
+    const info = await P.requestConsentInfo();
+    if (info && info.isConsentFormAvailable && info.status === 'REQUIRED') await P.showConsentForm();
+  } catch (e) { }
+}
+const adInit = () => adInitP || (adInitP = (async () => { await adConsent(); await adPlugin().initialize({ initializeForTesting: ADMOB.useTestAds }) })().catch(e => { adInitP = null; throw e }));
 async function nativeInterstitial() {
   const P = adPlugin(); if (!P) return null;
   try {
@@ -727,6 +735,39 @@ function prep(src) {
   for (let i = 0, j = 0; i < p.length; i += 4, j++) { const v = ((g[j] - mn) * 255 / r) | 0; p[i] = p[i + 1] = p[i + 2] = v }
   x.putImageData(d, 0, 0); return c;
 }
+/* ปรับภาพแบบท้องถิ่น (adaptive threshold ด้วย integral image) — ช่วยเมื่อแสงไม่สม่ำเสมอ/มีเงา */
+function prepAdaptive(src) {
+  const base = prep(src), w = base.width, h = base.height, x = base.getContext('2d', { willReadFrequently: true });
+  const d = x.getImageData(0, 0, w, h), p = d.data, I = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) { let row = 0; for (let xx = 0; xx < w; xx++) { row += p[(y * w + xx) * 4]; I[(y + 1) * (w + 1) + xx + 1] = I[y * (w + 1) + xx + 1] + row } }
+  const r = Math.max(8, Math.round(Math.min(w, h) / 14));
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
+    const x0 = Math.max(0, xx - r), x1 = Math.min(w, xx + r + 1), y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    const sum = I[y1 * (w + 1) + x1] - I[y0 * (w + 1) + x1] - I[y1 * (w + 1) + x0] + I[y0 * (w + 1) + x0];
+    const mean = sum / ((x1 - x0) * (y1 - y0)), i = (y * w + xx) * 4, v = p[i] < mean * 0.88 ? 0 : 255;
+    p[i] = p[i + 1] = p[i + 2] = v;
+  }
+  x.putImageData(d, 0, 0); return base;
+}
+/* คุณภาพภาพ: ความสว่างเฉลี่ย + ความคมชัด (variance ของ Laplacian บนภาพย่อ) */
+function quality(cv) {
+  const w = 320, h = Math.max(1, Math.round(cv.height * 320 / cv.width)), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(cv, 0, 0, w, h);
+  const p = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h); let sum = 0;
+  for (let i = 0, j = 0; i < p.length; i += 4, j++) { g[j] = p[i] * .299 + p[i + 1] * .587 + p[i + 2] * .114; sum += g[j] }
+  let m = 0, m2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) for (let xx = 1; xx < w - 1; xx++) { const k = y * w + xx, l = 4 * g[k] - g[k - 1] - g[k + 1] - g[k - w] - g[k + w]; m += l; m2 += l * l; n++ }
+  return { bright: sum / (w * h), sharp: n ? m2 / n - (m / n) * (m / n) : 0 };
+}
+/* ครอปเฉพาะกรอบนำทางสีเขียวบนกล้อง (แปลงพิกัดหน้าจอ → พิกเซลวิดีโอ เมื่อใช้ object-cover) + เผื่อขอบ */
+function guideCrop(v) {
+  const cw = v.clientWidth, ch = v.clientHeight, vw = v.videoWidth, vh = v.videoHeight; if (!cw || !ch) return toCanvas(v);
+  const k = Math.max(cw / vw, ch / vh), ox = (vw * k - cw) / 2, oy = (vh * k - ch) / 2;
+  let gx = 24, gy = ch / 3, gw = cw - 48, gh = ch / 3; const padX = gw * .06, padY = gh * .18;
+  gx -= padX; gw += padX * 2; gy -= padY; gh += padY * 2;
+  const sx = Math.max(0, (gx + ox) / k), sy = Math.max(0, (gy + oy) / k), sw = Math.min(vw - sx, gw / k), sh = Math.min(vh - sy, gh / k);
+  const c = document.createElement('canvas'); c.width = Math.round(sw); c.height = Math.round(sh); c.getContext('2d').drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height); return c;
+}
 function readQR(cv, maxSide = 1400) {
   if (typeof jsQR === 'undefined') return null;
   const sc = Math.min(1, maxSide / Math.max(cv.width, cv.height)), w = Math.round(cv.width * sc), h = Math.round(cv.height * sc);
@@ -753,31 +794,65 @@ function setProg(msg, p) {
   const el = $('#prog'); if (!el) return;
   el.innerHTML = msg ? `<div class="text-sm mb-1">${esc(msg)}</div><div class="h-2 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-2 bg-teal-500" style="width:${Math.round((p || 0) * 100)}%"></div></div>` : '';
 }
-async function runPipeline(cv, label) {
+/* อ่านหลายครั้ง (ภาพ/วิธีปรับภาพต่างกัน) แล้ว "โหวตทีละหลัก" — หลักที่อ่านไม่ตรงกันจะถูกทำเครื่องหมายให้ตรวจ */
+async function ocrOnce(cv, adaptive) {
+  const w = await getWorker(), r = await w.recognize(adaptive ? prepAdaptive(cv) : prep(cv));
+  const words = (r.data.words || []).map(x => ({ t: String(x.text || '').replace(/\D/g, ''), c: x.confidence || 0 })).filter(x => x.t);
+  return { text: r.data.text, nums: extractNums(r.data.text), words };
+}
+function voteNums(reads) {
+  const lens = LOTTO[S.lottery].len, out = [], seen = new Set(), N = reads.length;
+  const confOf = n => { let best = 0; reads.forEach(r => r.words.forEach(w => { if (w.t === n || n.includes(w.t) && w.t.length >= 2) best = Math.max(best, w.c) })); return best };
+  lens.forEach(L => {
+    const pool = []; reads.forEach(r => { const u = [...new Set(r.nums.filter(n => n.length === L))]; u.forEach(n => pool.push(n)) });
+    if (!pool.length) return;
+    let v = '', agree = 0;
+    for (let i = 0; i < L; i++) { const cnt = {}; pool.forEach(n => cnt[n[i]] = (cnt[n[i]] || 0) + 1); const top = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0]; v += top[0]; agree += top[1] / pool.length }
+    const fullHits = pool.filter(n => n === v).length, support = Math.min(1, pool.length / N);
+    if (!seen.has(v)) { seen.add(v); out.push({ v, agree: agree / L, hits: fullHits, reads: pool.length, conf: confOf(v) }) }
+  });
+  reads.forEach(r => r.nums.forEach(n => { if (!seen.has(n) && n.length >= 2 && !lens.includes(n.length)) { seen.add(n); out.push({ v: n, agree: 0, hits: 1, reads: 1, conf: confOf(n), badLen: true }) } }));
+  return out;
+}
+function addVoted(list, src, label) {
+  const lens = LOTTO[S.lottery].len;
+  list.forEach(o => {
+    if (S.cands.some(c => c.v === o.v)) return;
+    const low = o.badLen || o.agree < 0.999 || o.hits < 2 || (o.conf && o.conf < 75);
+    S.cands.push({ id: ++S.uid, v: o.v, src, label, checked: lens.includes(o.v.length) && !low, low, hits: o.hits, reads: o.reads });
+  });
+}
+async function runPipeline(cv, label, extra) {
   setProg(label + ': กำลังอ่าน QR…', .05);
+  let qrOk = false;
   try {
-    const qr = readQR(cv);
-    if (qr && qr.data) { S.notes.push('QR (' + label + '): ' + qr.data); addCands(extractNums(qr.data), 'QR', label); toast('พบ QR code') }
+    for (const c of [cv].concat(extra || [])) { const qr = readQR(c); if (qr && qr.data) { S.notes.push('QR (' + label + '): ' + qr.data); addCands(extractNums(qr.data), 'QR', label); toast('พบ QR code'); qrOk = true; break } }
   } catch (e) { }
   try {
-    setProg(label + ': กำลังอ่านตัวเลข (OCR)…', .1);
-    const w = await getWorker(); ocrProg = p => setProg(label + ': OCR ' + Math.round(p * 100) + '%', .1 + p * .9);
-    const r = await w.recognize(prep(cv)); ocrProg = null;
-    const nums = extractNums(r.data.text);
-    S.notes.push('OCR (' + label + '): ' + r.data.text.replace(/\s+/g, ' ').trim());
-    addCands(nums, 'OCR', label);
-    if (!nums.length) toast('ไม่พบตัวเลข — ลองถ่ายให้ชัด ตรง และแสงพอ');
+    const frames = [cv].concat(extra || []), jobs = []; frames.forEach((f, i) => jobs.push([f, i % 2 === 1]));
+    if (frames.length === 1) jobs.push([cv, true]);
+    const reads = []; let k = 0;
+    for (const [f, ad] of jobs) {
+      ocrProg = p => setProg(label + ': OCR ' + (k + 1) + '/' + jobs.length + ' ' + Math.round(p * 100) + '%', (k + p) / jobs.length * .9 + .1);
+      setProg(label + ': OCR ' + (k + 1) + '/' + jobs.length, k / jobs.length * .9 + .1);
+      const r = await ocrOnce(f, ad); reads.push(r); S.notes.push('OCR (' + label + ' ' + (k + 1) + (ad ? ' adaptive' : '') + '): ' + r.text.replace(/\s+/g, ' ').trim()); k++;
+    }
+    ocrProg = null;
+    const voted = voteNums(reads); addVoted(voted, 'OCR', label);
+    const good = voted.filter(o => !o.badLen);
+    if (!good.length && !qrOk) toast('ไม่พบเลขที่ความยาวตรงกับสลาก — ลองถ่ายให้ชัด ตรง แสงพอ หรือกรอกเอง');
+    else if (good.some(o => o.agree < .999 || o.hits < 2)) toast('บางหลักอ่านไม่ตรงกันทุกครั้ง — ตรวจเลขที่มีเครื่องหมาย ⚠️ กับสลากจริง');
   } catch (e) { ocrProg = null; toast('OCR ผิดพลาด: ' + e.message) }
   setProg(''); renderCands();
 }
 
 /* ---------- รายการเลขที่อ่านได้ (ต้องตรวจ/แก้ก่อนเสมอ) ---------- */
 function candsHTML() {
-  const room = 10 - S.tickets.filter(t => t.v).length;
+  const room = maxTickets() - S.tickets.filter(t => t.v).length;
   const rows = S.cands.map(c => `<div class="flex items-center gap-2">
     <input type="checkbox" ${c.checked ? 'checked' : ''} onchange="A.cToggle(${c.id},this.checked)" class="w-5 h-5 accent-teal-600">
-    <input class="${INP} font-mono tracking-widest text-lg" inputmode="numeric" value="${esc(c.v)}" oninput="A.cEdit(${c.id},this)">
-    <span class="chip bg-slate-100 dark:bg-slate-700 text-[11px]">${esc(c.src)}</span>
+    <input class="${INP} font-mono tracking-widest text-lg ${c.low ? '!border-amber-400 bg-amber-50 dark:bg-amber-900/20' : ''}" inputmode="numeric" value="${esc(c.v)}" oninput="A.cEdit(${c.id},this)">
+    ${c.low ? `<span class="chip bg-amber-100 text-amber-800 text-[11px]" title="อ่านได้ไม่ตรงกันทุกครั้ง/ไม่มั่นใจ">⚠️ ตรวจ</span>` : ''}<span class="chip bg-slate-100 dark:bg-slate-700 text-[11px]">${esc(c.src)}</span>
     <button class="text-rose-500 px-1" onclick="A.cDel(${c.id})" aria-label="ลบ">✕</button></div>`).join('');
   return `<div class="${CARD} space-y-3">
     <div class="font-bold">เลขที่อ่านได้ <span class="text-xs font-normal text-slate-500">(เลือกได้อีก ${Math.max(0, room)} ใบ)</span></div>
@@ -805,7 +880,7 @@ const Cam = {
     } catch (e) { toast('เปิดกล้องไม่ได้: ' + (e.message || e.name)) }
   },
   stop(silent) {
-    clearInterval(this.timer); this.timer = null;
+    clearInterval(this.timer); this.timer = null; this.tOn = false;
     if (this.stream) this.stream.getTracks().forEach(t => t.stop()); this.stream = null;
     const v = $('#vid'); if (v) v.srcObject = null;
     if (!silent) { $('#camOn')?.classList.add('hidden'); $('#camOff')?.classList.remove('hidden') }
@@ -821,7 +896,29 @@ const Cam = {
   },
   async shot() {
     const v = $('#vid'); if (!v || !v.videoWidth) return toast('กล้องยังไม่พร้อม');
-    this.busy = true; await runPipeline(toCanvas(v), 'ภาพจากกล้อง'); this.busy = false;
+    this.busy = true;
+    try {
+      // เก็บ 5 เฟรมห่างกันเล็กน้อย เลือก 3 เฟรมที่คมที่สุด · ครอปเฉพาะกรอบเขียว
+      const fr = [];
+      for (let i = 0; i < 5; i++) { const c = guideCrop(v); fr.push({ c, q: quality(c) }); if (i < 4) await new Promise(r => setTimeout(r, 180)) }
+      fr.sort((a, b) => b.q.sharp - a.q.sharp);
+      const best = fr[0].q;
+      if (best.bright < 55) toast('แสงน้อยเกินไป — เปิดไฟหรือกดปุ่ม 🔦');
+      else if (best.bright > 225) toast('แสงจ้า/สะท้อนมากเกินไป — เอียงสลากเล็กน้อย');
+      else if (best.sharp < 35) toast('ภาพเบลอ — ถือนิ่ง ๆ ให้โฟกัสแล้วถ่ายใหม่');
+      const pick = fr.slice(0, 3).map(x => x.c);
+      await runPipeline(pick[0], 'ภาพจากกล้อง', pick.slice(1));
+      // ถ้าครอปแล้วไม่ได้เลขที่ยาวตรงกับสลากเลย ลองทั้งภาพอีกครั้ง
+      const lens = LOTTO[S.lottery].len;
+      if (!S.cands.some(c => lens.includes(c.v.length))) { toast('ไม่พบในกรอบ — ลองอ่านทั้งภาพ'); await runPipeline(toCanvas(v), 'ทั้งภาพ') }
+    } finally { this.busy = false }
+  },
+  async torch() {
+    try {
+      const t = this.stream && this.stream.getVideoTracks()[0]; if (!t) return;
+      const cap = t.getCapabilities ? t.getCapabilities() : {}; if (!cap.torch) return toast('อุปกรณ์นี้ไม่รองรับไฟแฟลชผ่านเว็บ');
+      this.tOn = !this.tOn; await t.applyConstraints({ advanced: [{ torch: this.tOn }] });
+    } catch (e) { toast('เปิดไฟแฟลชไม่ได้') }
   }
 };
 
@@ -931,7 +1028,7 @@ const VIEWS = {
         <video id="vid" playsinline muted class="w-full h-full object-cover"></video>
         <div id="camOff" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white p-4 text-center"><div class="text-5xl">📷</div><div class="text-sm opacity-80">กดเปิดกล้อง (มีโฆษณาคั่นก่อนใช้งาน)</div><button class="${BP}" onclick="Cam.start()">เปิดกล้อง</button></div>
         <div id="camOn" class="hidden absolute inset-0 pointer-events-none"><div class="absolute inset-x-6 top-1/3 h-1/3 border-2 border-emerald-400 rounded-xl"></div><div class="absolute bottom-2 inset-x-0 text-center text-xs text-white/90">จัดเลขบนสลากให้อยู่ในกรอบ · QR จะถูกอ่านอัตโนมัติ</div></div></div>
-      <div id="camOnBtns" class="flex gap-2"><button class="${BP} flex-1" onclick="Cam.shot()">📸 ถ่าย + อ่านเลข</button><button class="${BS}" onclick="Cam.flip()">🔄</button><button class="${BS}" onclick="Cam.stop()">ปิดกล้อง</button></div>
+      <div id="camOnBtns" class="flex gap-2"><button class="${BP} flex-1" onclick="Cam.shot()">📸 ถ่าย + อ่านเลข</button><button class="${BS}" onclick="Cam.flip()">🔄</button><button class="${BS}" onclick="Cam.torch()" title="ไฟแฟลช">🔦</button><button class="${BS}" onclick="Cam.stop()">ปิดกล้อง</button></div>
       <div id="prog"></div><div id="cands">${candsHTML()}</div></div>${disc()}`;
   },
   results() {
