@@ -165,7 +165,7 @@ async function jget(path) { // path เริ่มด้วย "/" — ลอ�
   if (!bases().length) throw new Error('ยังไม่ได้ตั้งแหล่งข้อมูลส่วนตัว');
   for (const b of bases()) {
     const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
-    try { const r = await fetch(b + path + (path.includes('?') ? '&' : '?') + '_=' + Date.now(), { cache: 'no-store', signal: ctl.signal });   // ?_= กันแคช CDN ของ GitHub Pages (ค้างได้ ~10 นาที)
+    try { const r = await fetch(b + path + (path.includes('?') ? '&' : '?') + '_=' + Math.floor(Date.now() / 60000), { cache: 'no-store', signal: ctl.signal });   // ?_= เปลี่ยนทุก 1 นาที: ผู้ใช้ทุกคนในนาทีเดียวกันใช้แคช CDN ร่วมกัน (ไม่ยิงต้นทางทีละคน) แต่ไม่ค้างเกิน ~1 นาที
       if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json() }
     catch (e) { err = e } finally { clearTimeout(t) }
   }
@@ -426,10 +426,12 @@ async function loadWeb(lot) {
   const W = WEB[lot]; if (!W || S.set.web === false || S.webBusy[lot]) return;
   S.webBusy[lot] = true; S.webErr[lot] = null; if (S.lottery === lot) render();
   let err = null;
-  // 1) API ผลหวย.com ก่อน (เรียกตรงได้ ไม่ติด CORS)
-  try { await loadApi(lot) } catch (e) { err = e }
-  // 2) เว็บต้นทางผ่านพร็อกซี: ลองเฉพาะเมื่อ API ไม่ให้ผล หรือผู้ใช้ตั้งพร็อกซีของตัวเองไว้ (พร็อกซีสาธารณะมักถูกบล็อก ทำให้ช้าและมี error เต็มหน้าจอ)
-  const hasText = W.url || W.srcs || W.dated, own = (S.set.proxy || '').includes('{url}'), haveApi = !err && S.apiAt[lot] && (S.mres[lot] || []).length;
+  // ผู้ใช้จำนวนมาก: ผลมาจากบอท (ไฟล์สถิตผ่าน CDN) เป็นหลัก — เรียก ผลหวย.com ตรงเฉพาะเมื่อยังไม่มีผลของหวยนี้เลย (บอทล่ม/ยังไม่สร้างไฟล์)
+  // หรือผู้ใช้เปิด "direct" เอง เพื่อไม่ยิงเว็บของผู้อื่นที่ให้ใช้ฟรีจากเครื่องผู้ใช้ทุกคน
+  const haveData = (S.mres[lot] || []).length > 0;
+  if (S.set.direct === true || !haveData) { try { await loadApi(lot) } catch (e) { err = e } }
+  // เว็บต้นทางผ่านพร็อกซี: ลองเฉพาะเมื่อไม่มีผลเลย หรือผู้ใช้ตั้งพร็อกซีของตัวเองไว้
+  const hasText = W.url || W.srcs || W.dated, own = (S.set.proxy || '').includes('{url}'), haveApi = !err && (S.mres[lot] || []).length > 0;
   if (hasText && (own || !haveApi)) {
     try {
       if (W.url) { const t = await webText(W.url), r = W.parse(t); if (!r.date) throw new Error('อ่านวันที่งวดไม่ได้ จึงไม่บันทึก'); saveWeb(lot, r.date, r.groups) }
