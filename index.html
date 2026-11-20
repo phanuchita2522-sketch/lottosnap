@@ -408,7 +408,8 @@ function apiGroups(lot, prizes) {
   const sp = dg(pz['special-prize'], 5), t3 = dg(pz['three-digit-top'], 3), b2 = dg(pz['two-digit-bottom'], 2);
   if (sp.slice(-3) !== t3) throw new Error('3 ตัวบนไม่ตรงกับท้ายรางวัลพิเศษ');
   const g = [G('h3', '3 ตัวบน', 'last', 0, [t3]), G('h2', '2 ตัวบน', 'last', 0, [sp.slice(-2)]), G('h2b', '2 ตัวล่าง', 'full', 0, [b2])];
-  return lot === 'hanoi' ? g : [G('h4', 'เลข 4 ตัว', 'full', 0, [sp.slice(-4)]), ...g];
+  const hsp = G('hsp', 'รางวัลพิเศษ', 'full', 0, [sp]);   // เลขพิเศษ 5 หลักเต็ม
+  return lot === 'hanoi' ? [hsp, ...g] : [hsp, G('h4', 'เลข 4 ตัว', 'full', 0, [sp.slice(-4)]), ...g];
 }
 S.apiAt = S.apiAt || {};
 async function loadApi(lot) {   // คืนจำนวนงวดที่ดึงได้ (0 = ไม่มีงวดใหม่) / throw ถ้าเรียกไม่ได้
@@ -997,16 +998,18 @@ function heroRest(r, shown) {
   if (!rows.length) return '';
   return `<div class="mt-3 pt-3 border-t border-white/25 space-y-2">${rows.map(g => `<div><div class="flex justify-between text-[11px] opacity-90"><span class="font-semibold">${esc(g.name)}</span><span>${esc(MATCH_LABEL[g.match] || '')}${g.reward ? ' · ' + fmt(g.reward) : ''}</span></div><div class="flex flex-wrap gap-1 mt-1">${g.numbers.map(n => `<span class="font-mono text-[12px] px-1.5 py-0.5 rounded-md bg-white/15">${esc(n)}</span>`).join('')}</div></div>`).join('')}</div>`;
 }
+const hanoiSp = r => (r.lottery === 'hanoi' || (LOTTO[r.lottery] || {}).sub === 'hanoi') ? ((grp(r, 'hsp').numbers[0]) || (grp(r, 'v_0').numbers[0]) || '') : '';
 function heroCard(r) {
   const th = r.lottery === 'thai' && grp(r, 'prizeFirst').numbers.length;
   let inner;
   if (th) {
     inner = `<div class="text-xs opacity-80">รางวัลที่ 1</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'prizeFirst').numbers[0])}</div>
       <div class="grid grid-cols-3 gap-2 mt-3">${[['runningNumberFrontThree', 'เลขหน้า 3 ตัว'], ['runningNumberBackThree', 'เลขท้าย 3 ตัว'], ['runningNumberBackTwo', 'เลขท้าย 2 ตัว']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>${heroRest(r, ['prizeFirst', 'runningNumberFrontThree', 'runningNumberBackThree', 'runningNumberBackTwo'])}`;
-  } else if (r.lottery === 'hanoi' && grp(r, 'v_0').numbers.length) {
-    inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'v_0').numbers[0])}</div>
-      <div class="grid grid-cols-3 gap-2 mt-3">${[['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>
-      ${heroRest(r, ['v_0', 'h3', 'h2', 'h2b'])}`;
+  } else if (hanoiSp(r)) {
+    const sub = r.lottery !== 'hanoi', ids = sub ? [['h4', 'เลข 4 ตัว'], ['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']] : [['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']];
+    inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(hanoiSp(r))}</div>
+      <div class="grid ${sub ? 'grid-cols-2' : 'grid-cols-3'} gap-2 mt-3">${ids.map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>
+      ${heroRest(r, ['hsp', 'v_0', 'h4', 'h3', 'h2', 'h2b'])}`;
   } else {
     inner = `<div class="grid grid-cols-2 gap-2">${r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => `<div class="bg-white/15 rounded-xl p-2"><div class="text-[11px] opacity-80">${esc(g.name)}</div><div class="font-mono font-bold break-all">${esc(g.numbers.slice(0, 4).join(' '))}</div></div>`).join('') || '<div class="text-sm opacity-80 col-span-2">ยังไม่ได้กรอกเลขรางวัล</div>'}</div>${heroRest(r, r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => g.id))}`;
   }
