@@ -678,17 +678,19 @@ function rewardCard() {
   const v = Math.min(REWARD.views, Math.max(0, +S.rw.views || 0));
   return `<div class="flex items-center justify-between gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 p-2 text-xs"><div>🎁 ดูโฆษณาครบ ${REWARD.views} ครั้ง เพิ่มจำนวนใบ +${REWARD.add} ใบ (ดูแล้ว ${v}/${REWARD.views} · ตรวจได้ ${maxTickets()} ใบ สูงสุด ${REWARD.max})</div><button class="${BS} shrink-0" onclick="A.watchReward()">▶ ดูโฆษณา</button></div>`;
 }
+let rewardBusy = false;
 async function watchReward() {
+  if (rewardBusy) return;   // กันกดซ้ำระหว่างโฆษณากำลังโหลด/เล่น
   const P = adPlugin(); if (!P || !isNativeApp()) return toast('ดูโฆษณาได้เฉพาะในแอปมือถือ');
   if (!canEarnMore()) return toast('ตรวจได้สูงสุด ' + REWARD.max + ' ใบแล้ว');
-  let rewarded = false, h = null;
+  rewardBusy = true; let rewarded = false, h = null;
   try {
     await adInit();
     h = await P.addListener('onRewardedVideoAdReward', () => { rewarded = true });
     await P.prepareRewardVideoAd({ adId: adUnit('rewarded'), isTesting: ADMOB.useTestAds });
     const r = await P.showRewardVideoAd(); if (r && (r.amount > 0 || r.type)) rewarded = true;
   } catch (e) { if (!rewarded) toast('โหลดโฆษณาไม่ได้ ลองใหม่อีกครั้งภายหลัง') }
-  finally { try { h && h.remove && await h.remove() } catch (e) { } }
+  finally { try { h && h.remove && await h.remove() } catch (e) { } rewardBusy = false }
   if (!rewarded) return;
   S.rw.views = (+S.rw.views || 0) + 1;
   if (S.rw.views >= REWARD.views) { S.rw.views = 0; S.rw.bonus = Math.min(REWARD.max - REWARD.base, (+S.rw.bonus || 0) + REWARD.add); toast('🎉 เพิ่มจำนวนใบแล้ว ตรวจได้ ' + maxTickets() + ' ใบ') }
@@ -977,7 +979,7 @@ function addTickets(list, src) {
 
 /* ---------- Views ---------- */
 const disc = () => `<p class="text-[11px] text-center text-slate-500 mt-6 leading-relaxed">LottoSnap เป็นแอปฟรี ใช้ตรวจผลรางวัลเท่านั้น ไม่มีการซื้อขายสลากหรือการพนันใด ๆ · ผลที่ถูกต้องให้ยึดประกาศอย่างเป็นทางการ · <a class="underline" href="#about">เกี่ยวกับ</a></p>`;
-const avatarHTML = () => S.profile.img ? `<img src="${S.profile.img}" class="w-full h-full object-cover" alt="">` : esc(S.profile.avatar);
+const avatarHTML = () => S.profile.img ? `<img src="${esc(S.profile.img)}" class="w-full h-full object-cover" alt="">` : esc(S.profile.avatar);
 const secTitle = t => `<h2 class="font-bold text-lg mb-2">${t}</h2>`;
 
 function groupChips(r, hitSet = new Set()) {
@@ -1512,7 +1514,7 @@ function go(v) { if (location.hash !== '#' + v) location.hash = v; else route() 
 function route() {
   const v = (location.hash || '#home').slice(1);
   if (S.view === 'camera' && v !== 'camera') Cam.stop(true);
-  S.view = VIEWS[v] ? v : 'home';
+  S.view = Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'home';   // กัน #constructor / #__proto__
   if (S.view === 'notifs') setTimeout(() => { }, 0);
   render(); window.scrollTo(0, 0);
 }
