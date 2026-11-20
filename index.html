@@ -1006,9 +1006,12 @@ function heroCard(r) {
     inner = `<div class="text-xs opacity-80">รางวัลที่ 1</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'prizeFirst').numbers[0])}</div>
       <div class="grid grid-cols-3 gap-2 mt-3">${[['runningNumberFrontThree', 'เลขหน้า 3 ตัว'], ['runningNumberBackThree', 'เลขท้าย 3 ตัว'], ['runningNumberBackTwo', 'เลขท้าย 2 ตัว']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>`;
   } else if (hanoiSp(r)) {
-    const sub = r.lottery !== 'hanoi', ids = sub ? [['h4', 'เลข 4 ตัว'], ['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']] : [['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']];
-    inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(hanoiSp(r))}</div>
-      <div class="grid ${sub ? 'grid-cols-2' : 'grid-cols-3'} gap-2 mt-3">${ids.map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>
+    const sp = hanoiSp(r), sub = r.lottery !== 'hanoi';
+    const h4 = (grp(r, 'h4').numbers[0]) || (/^\d{5}$/.test(sp) ? sp.slice(-4) : '');   // เลข 4 ตัว = 4 หลักท้ายของรางวัลพิเศษ
+    const val = id => id === 'h4' ? (h4 || '—') : (grp(r, id).numbers.join(' ') || '—');
+    const ids = [['h4', 'เลข 4 ตัว'], ['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']];
+    inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(sp)}</div>
+      <div class="grid grid-cols-2 gap-2 mt-3">${ids.map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(val(id))}</div></div>`).join('')}</div>
       ${sub ? heroRest(r, ['hsp', 'v_0', 'h4', 'h3', 'h2', 'h2b']) : ''}`;   // ปกติ: แถบกะทัดรัด รางวัลอื่นดูในรายการด้านล่าง
   } else {
     inner = `<div class="grid grid-cols-2 gap-2">${r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => `<div class="bg-white/15 rounded-xl p-2"><div class="text-[11px] opacity-80">${esc(g.name)}</div><div class="font-mono font-bold break-all">${esc(g.numbers.slice(0, 4).join(' '))}</div></div>`).join('') || '<div class="text-sm opacity-80 col-span-2">ยังไม่ได้กรอกเลขรางวัล</div>'}</div>${heroRest(r, r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => g.id))}`;
