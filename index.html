@@ -1004,7 +1004,7 @@ function heroCard(r) {
   let inner;
   if (th) {
     inner = `<div class="text-xs opacity-80">รางวัลที่ 1</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(grp(r, 'prizeFirst').numbers[0])}</div>
-      <div class="grid grid-cols-3 gap-2 mt-3">${[['runningNumberFrontThree', 'เลขหน้า 3 ตัว'], ['runningNumberBackThree', 'เลขท้าย 3 ตัว'], ['runningNumberBackTwo', 'เลขท้าย 2 ตัว']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>${heroRest(r, ['prizeFirst', 'runningNumberFrontThree', 'runningNumberBackThree', 'runningNumberBackTwo'])}`;
+      <div class="grid grid-cols-3 gap-2 mt-3">${[['runningNumberFrontThree', 'เลขหน้า 3 ตัว'], ['runningNumberBackThree', 'เลขท้าย 3 ตัว'], ['runningNumberBackTwo', 'เลขท้าย 2 ตัว']].map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(grp(r, id).numbers.join(' ') || '—')}</div></div>`).join('')}</div>`;
   } else if (hanoiSp(r)) {
     const sub = r.lottery !== 'hanoi', ids = sub ? [['h4', 'เลข 4 ตัว'], ['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']] : [['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']];
     inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(hanoiSp(r))}</div>
