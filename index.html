@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config = { darkMode: 'class' }</script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   .chip{display:inline-flex;align-items:center;border-radius:9999px;padding:.3rem .8rem;font-size:.8rem;font-weight:500;white-space:nowrap}
@@ -69,15 +69,9 @@
    ฟรี · ตรวจผลรางวัลอย่างเดียว · ไม่มีการซื้อขายหรือพนัน
    ============================================================ */
 
-/* ---------- ตั้งค่าโฆษณา (ใส่โค้ดโฆษณาจริงที่ mount) ---------- */
+/* ---------- ตั้งค่าโฆษณา: ใช้ Google AdMob เท่านั้น (เฉพาะแอปมือถือที่ห่อด้วย Capacitor) — บนเว็บ/PWA ไม่มีโฆษณา ---------- */
 const AD_CONFIG = {
-  enabled: true,          // โฆษณาคั่นก่อนใช้กล้อง/เสียง
-  seconds: 5,             // เวลารอก่อนกดไปต่อ
-  // ใส่โค้ดโฆษณาจริงของคุณที่นี่ (เช่น AdSense / GPT / SDK ของเครือข่ายโฆษณา)
-  // el = กล่องโฆษณา, place = 'camera' | 'voice'
-  mount(el, place) {
-    el.innerHTML = '<div class="p-6 text-slate-500 text-sm">[พื้นที่โฆษณา — ' + place + ']<br>วางโค้ดโฆษณาใน AD_CONFIG.mount()</div>';
-  }
+  enabled: true           // โฆษณาคั่นก่อนใช้กล้อง/เสียง (AdMob interstitial) · ตั้งเป็น false เพื่อปิด
 };
 const DEFAULT_API = 'https://phanuchita2522-sketch.github.io/lottobot-Public-'; // บอทของเจ้าของแอป (ทุกเครื่องได้ผลชุดเดียวกัน รวมเลข 6 หลักของลาว) | // ว่าง = ใช้ชุดข้อมูลชุมชนในตัว | หรือ URL ของบอท/API ที่มี /latest /list/{หน้า} /lotto/{id} /other/{ชนิด}
 
@@ -86,7 +80,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => n ? Number(n).toLocaleString('th-TH') + ' บาท' : '—';
 const LS = {
-  get(k, d) { try { const v = localStorage.getItem('ls_' + k); return v ? JSON.parse(v) : d } catch (e) { return d } },
+  get(k, d) { try { const v = localStorage.getItem('ls_' + k); const p = v ? JSON.parse(v) : d; return p ?? d } catch (e) { return d } },
   set(k, v) { try { localStorage.setItem('ls_' + k, JSON.stringify(v)) } catch (e) { toast('พื้นที่จัดเก็บเต็ม/ถูกบล็อก') } }
 };
 const BTN = 'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-95 disabled:opacity-50';
@@ -150,6 +144,7 @@ const saveSet = () => LS.set('settings', S.set);
 if (/rayriffy\.com/.test(S.set.api || '')) { S.set.api = ''; saveSet() } // ย้ายค่าเก่า: โดเมนนี้เลิกให้บริการแล้ว
 
 /* ---------- ผลรางวัล ---------- */
+const resKey = r => (r.id || '') + '|' + (r.date || '');
 function curResult() {
   if (S.demo[S.lottery]) return S.demo[S.lottery];
   if (S.lottery === 'thai' && S.draw && !S.useManual) return S.draw;
@@ -200,8 +195,11 @@ async function loadDataset() {
 function fromDS(d) {
   const groups = presetGroups('thai').map(g => {
     const len = DS_LEN[g.id] || 6;
-    return Object.assign({}, g, { numbers: (d[DS_MAP[g.id]] || []).map(x => String(x).padStart(len, '0')) });
+    const nums = (Array.isArray(d[DS_MAP[g.id]]) ? d[DS_MAP[g.id]] : []).map(x => String(x ?? '').trim()).filter(x => /^\d+$/.test(x) && x.length <= len).map(x => x.padStart(len, '0'));
+    return Object.assign({}, g, { numbers: nums });
   });
+  const need = { prizeFirst: 1, prizeFirstNear: 2, prizeSecond: 5, prizeThird: 10, prizeForth: 50, prizeFifth: 100, runningNumberFrontThree: 2, runningNumberBackThree: 2, runningNumberBackTwo: 1 };
+  for (const g of groups) if (need[g.id] && g.numbers.length !== need[g.id]) throw new Error('ข้อมูลงวด ' + d.draw_date + ' ไม่ครบ (' + g.id + ' ' + g.numbers.length + '/' + need[g.id] + ')');
   const ok = (id, n) => { const g = groups.find(x => x.id === id).numbers; return g.length && g.every(x => /^\d+$/.test(x) && x.length === n) };
   if (!ok('prizeFirst', 6) || !ok('runningNumberBackTwo', 2)) throw new Error('ข้อมูลงวด ' + d.draw_date + ' ไม่ครบ');
   return { lottery: 'thai', date: d.draw_date_th || thaiDateISO(d.draw_date), id: d.draw_date, groups, source: 'dataset' };
@@ -226,7 +224,7 @@ async function fetchListPage() {
     try {
       S.listPage++;
       const j = await jget('/list/' + S.listPage);
-      const items = j.response || j.data || [];
+      const items = (j.response || j.data || []).filter(it => it && /^[\w.-]{1,40}$/.test(String(it.id)));   // รับเฉพาะ id รูปแบบปลอดภัย
       if (!items.length) S.listEnd = true;
       S.listCache.push(...items); S.listMode = 'api'; return;
     } catch (e) { S.listPage--; if (S.listCache.length) throw e }
@@ -397,6 +395,10 @@ function saveWeb(lot, date, groups, quiet, via) {
 /* ผลหวย.com — API สาธารณะฟรี (CORS *, ไม่ต้องใช้คีย์, แคช 300 วินาที): ลาว 4/3/2 ตัว · ฮานอย = รางวัลพิเศษ 5 หลัก + 3 ตัวบน + 2 ตัวล่าง
    ตรวจโครงสร้าง/ความสอดคล้องของเลขก่อนบันทึก ไม่ตรงรูปแบบ = ข้ามงวดนั้น (ไม่เดา) */
 const API_BASE = 'https://xn--t3cmiit.com/api/public/results';
+/* API สดของเจ้าของแอป (Cloudflare Worker ไฟล์ cf-live.js) — ใส่ URL หลัง Deploy เช่น 'https://lottosnap-live.ชื่อคุณ.workers.dev'
+   ถ้าเว้นว่าง แอปใช้ผลจากบอท + ถามผลหวย.com ตรงเมื่อบอทช้า (เหมือนเดิม) */
+const LIVE_API = '';
+const liveBase = () => { const v = ((S.set && S.set.live) || LIVE_API || '').trim().replace(/\/+$/, ''); return /^https:\/\//.test(v) ? v : '' };
 function apiGroups(lot, prizes) {
   const pz = {}; for (const p of prizes || []) if (p && Array.isArray(p.numbers) && p.numbers.length === 1) pz[String(p.slug)] = String(p.numbers[0]).trim();
   const dg = (v, n) => { if (!new RegExp('^\\d{' + n + '}$').test(v || '')) throw new Error('รูปแบบเลขไม่ตรง'); return v };
@@ -414,9 +416,10 @@ function apiGroups(lot, prizes) {
 S.apiAt = S.apiAt || {};
 async function loadApi(lot) {   // คืนจำนวนงวดที่ดึงได้ (0 = ไม่มีงวดใหม่) / throw ถ้าเรียกไม่ได้
   const W = WEB[lot]; if (!W || !W.api) return 0;
-  if (Date.now() - (S.apiAt[lot] || 0) < 300000) return 0;   // ตามที่เว็บขอ: อย่าดึงถี่กว่า 300 วินาที
+  const live = liveBase();
+  if (Date.now() - (S.apiAt[lot] || 0) < (live ? 45000 : 300000)) return 0;   // ต้นทางขอให้ไม่ดึงถี่กว่า 300 วินาที — ถ้าผ่าน Worker แคช (เครื่องละไม่เกิน 1 ครั้ง/45 วินาที) ต้นทางไม่ถูกยิงตรง
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000); let j;
-  try { const r = await fetch(API_BASE + '?lottery=' + encodeURIComponent(W.api) + '&limit=20', { signal: ctl.signal }); if (r.status === 404) { S.apiAt[lot] = Date.now(); return 0 } if (!r.ok) throw new Error('HTTP ' + r.status); j = await r.json() }
+  try { const r = await fetch((live ? live + '/results' : API_BASE) + '?lottery=' + encodeURIComponent(W.api) + '&limit=20', { signal: ctl.signal }); if (r.status === 404) { S.apiAt[lot] = Date.now(); return 0 } if (!r.ok) throw new Error('HTTP ' + r.status); j = await r.json() }
   finally { clearTimeout(t) }
   if (!j || !j.success || !Array.isArray(j.data)) throw new Error('ผลหวย.com ตอบรูปแบบที่ไม่รู้จัก');
   S.apiAt[lot] = Date.now(); let n = 0; const today = ictNow(); today.setHours(23, 59, 59, 999);
@@ -429,6 +432,19 @@ async function loadApi(lot) {   // คืนจำนวนงวดที่ด
   }
   return n;
 }
+/* ข้อมูลจากบอทเก่ากว่าที่ควร? (หลังเวลาออกผลแล้วแต่ยังไม่มีงวดของวันนี้) → ให้แอปถาม ผลหวย.com ตรงเป็นตัวสำรอง
+   เรียกได้ไม่เกิน 1 ครั้ง / 5 นาที / หวย 1 ชนิด / เครื่อง (loadApi คุมไว้) และเรียกเฉพาะตอนข้อมูลช้าเท่านั้น */
+function botStale(lot) {
+  if (!WEB[lot] || !WEB[lot].api) return false;
+  const now = ictNow(), mins = now.getHours() * 60 + now.getMinutes(), day = n => new Date(now.getFullYear(), now.getMonth(), now.getDate() - n);
+  let latest = 0; for (const r of (S.mres[lot] || [])) { const d = drawDate(r); if (d && +d > latest) latest = +d }
+  if (!latest) return true;
+  // งวดล่าสุดที่ "ควรออกแล้ว": ฮานอยออกทุกวันราว 17:00-18:30 · ลาวออกจันทร์-ศุกร์ราว 20:30 (วันเสาร์-อาทิตย์ถือว่าไม่มีงวดใหม่)
+  const isLao = lot === 'lao', due = mins >= (isLao ? 21 * 60 + 15 : 18 * 60 + 45);
+  let k = due ? 0 : 1;
+  if (isLao) while ([0, 6].includes(day(k).getDay())) k++;
+  return latest < +day(k);
+}
 async function loadWeb(lot) {
   const W = WEB[lot]; if (!W || S.set.web === false || S.webBusy[lot]) return;
   S.webBusy[lot] = true; S.webErr[lot] = null; if (S.lottery === lot) render();
@@ -436,10 +452,10 @@ async function loadWeb(lot) {
   // ผู้ใช้จำนวนมาก: ผลมาจากบอท (ไฟล์สถิตผ่าน CDN) เป็นหลัก — เรียก ผลหวย.com ตรงเฉพาะเมื่อยังไม่มีผลของหวยนี้เลย (บอทล่ม/ยังไม่สร้างไฟล์)
   // หรือผู้ใช้เปิด "direct" เอง เพื่อไม่ยิงเว็บของผู้อื่นที่ให้ใช้ฟรีจากเครื่องผู้ใช้ทุกคน
   const haveData = (S.mres[lot] || []).length > 0;
-  if (S.set.direct === true || !haveData) { try { await loadApi(lot) } catch (e) { err = e } }
+  if (S.set.direct === true || !haveData || botStale(lot) || (liveBase() && WEB[lot].api)) { try { await loadApi(lot) } catch (e) { err = e } }
   // เว็บต้นทางผ่านพร็อกซี: ลองเฉพาะเมื่อไม่มีผลเลย หรือผู้ใช้ตั้งพร็อกซีของตัวเองไว้
   const hasText = W.url || W.srcs || W.dated, own = (S.set.proxy || '').includes('{url}'), haveApi = !err && (S.mres[lot] || []).length > 0;
-  if (hasText && (own || !haveApi)) {
+  if (hasText && (own || (!haveApi && !haveData))) {   // สแกนหน้าเว็บผ่านพร็อกซีสาธารณะเฉพาะเมื่อไม่มีข้อมูลเลย
     try {
       if (W.url) { const t = await webText(W.url), r = W.parse(t); if (!r.date) throw new Error('อ่านวันที่งวดไม่ได้ จึงไม่บันทึก'); saveWeb(lot, r.date, r.groups) }
       else {
@@ -621,6 +637,7 @@ function luckyTick() {
   try { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body }) } catch (e) { }
 }
 setInterval(() => { remindTick(); luckyTick() }, 30000);
+setInterval(() => { try { if (!document.hidden && S.lottery !== 'thai' && botStale(S.lottery)) loadOther(S.lottery) } catch (e) { } }, 120000);   // เปิดแอปค้างไว้ช่วงรอผล: เช็กซ้ำเองเมื่อข้อมูลยังเก่า
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { remindTick(); luckyTick() } });
 
 /* ---------- Modal / Ad ---------- */
@@ -688,7 +705,7 @@ async function watchReward() {
     await adInit();
     h = await P.addListener('onRewardedVideoAdReward', () => { rewarded = true });
     await P.prepareRewardVideoAd({ adId: adUnit('rewarded'), isTesting: ADMOB.useTestAds });
-    const r = await P.showRewardVideoAd(); if (r && (r.amount > 0 || r.type)) rewarded = true;
+    const r = await Promise.race([P.showRewardVideoAd(), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 180000))]); if (r && (r.amount > 0 || r.type)) rewarded = true;
   } catch (e) { if (!rewarded) toast('โหลดโฆษณาไม่ได้ ลองใหม่อีกครั้งภายหลัง') }
   finally { try { h && h.remove && await h.remove() } catch (e) { } rewardBusy = false }
   if (!rewarded) return;
@@ -698,22 +715,9 @@ async function watchReward() {
   LS.set('reward', S.rw); render();
 }
 async function adGate(place) {
-  if (!AD_CONFIG.enabled) return true;
-  if (await nativeInterstitial()) return true;
-  return adGateWeb(place);
-}
-function adGateWeb(place) {
-  return new Promise(res => {
-    let left = AD_CONFIG.seconds, t; const root = $('#adroot');
-    root.innerHTML = `<div class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4"><div class="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-4 text-center">
-      <div class="text-xs text-slate-500 mb-2">โฆษณา · ช่วยให้ LottoSnap ใช้ฟรี</div>
-      <div id="adbox" class="min-h-[250px] rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden"></div>
-      <div class="flex gap-2 mt-3"><button id="adx" class="${BS} flex-1">ยกเลิก</button><button id="adgo" disabled class="${BP} flex-1">รอ ${left} วิ</button></div></div></div>`;
-    try { AD_CONFIG.mount($('#adbox'), place) } catch (e) { }
-    const done = v => { clearInterval(t); root.innerHTML = ''; res(v) };
-    t = setInterval(() => { left--; const b = $('#adgo'); if (!b) return clearInterval(t); if (left > 0) b.textContent = 'รอ ' + left + ' วิ'; else { clearInterval(t); b.disabled = false; b.textContent = 'ไปต่อ ▶' } }, 1000);
-    $('#adx').onclick = () => done(false); $('#adgo').onclick = () => done(true);
-  });
+  if (!AD_CONFIG.enabled || !isNativeApp() || !adPlugin()) return true;   // เว็บ/PWA: ไม่มีโฆษณา ไม่ขัดจังหวะผู้ใช้
+  await nativeInterstitial();   // โหลด/แสดงไม่ได้ก็ไปต่อ — ไม่บล็อกผู้ใช้เพราะโฆษณาขัดข้อง
+  return true;
 }
 
 /* ---------- OCR / QR pipeline ---------- */
@@ -806,13 +810,20 @@ async function ocrOnce(cv, adaptive) {
 function voteNums(reads) {
   const lens = LOTTO[S.lottery].len, out = [], seen = new Set(), N = reads.length;
   const confOf = n => { let best = 0; reads.forEach(r => r.words.forEach(w => { if (w.t === n || n.includes(w.t) && w.t.length >= 2) best = Math.max(best, w.c) })); return best };
+  const ham = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++; return d };
   lens.forEach(L => {
-    const pool = []; reads.forEach(r => { const u = [...new Set(r.nums.filter(n => n.length === L))]; u.forEach(n => pool.push(n)) });
+    const pool = []; reads.forEach(r => { [...new Set(r.nums.filter(n => n.length === L))].forEach(n => pool.push(n)) });
     if (!pool.length) return;
-    let v = '', agree = 0;
-    for (let i = 0; i < L; i++) { const cnt = {}; pool.forEach(n => cnt[n[i]] = (cnt[n[i]] || 0) + 1); const top = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0]; v += top[0]; agree += top[1] / pool.length }
-    const fullHits = pool.filter(n => n === v).length, support = Math.min(1, pool.length / N);
-    if (!seen.has(v)) { seen.add(v); out.push({ v, agree: agree / L, hits: fullHits, reads: pool.length, conf: confOf(v) }) }
+    // จัดกลุ่มตัวเลขที่ "เกือบเหมือนกัน" (ต่างกันไม่เกิน ~1/3 ของความยาว) เป็นเลขเดียวกันที่อ่านเพี้ยน — เลขคนละใบจะไม่ถูกผสมกัน
+    const freq = {}; pool.forEach(n => freq[n] = (freq[n] || 0) + 1);
+    const clusters = [], tol = Math.max(1, Math.floor(L / 3));
+    Object.keys(freq).sort((a, b) => freq[b] - freq[a]).forEach(n => { const c = clusters.find(c => ham(c.rep, n) <= tol); if (c) c.m.push(n); else clusters.push({ rep: n, m: [n] }) });
+    clusters.forEach(c => {
+      const items = []; c.m.forEach(n => { for (let k = 0; k < freq[n]; k++) items.push(n) });
+      let v = '', agree = 0;
+      for (let i = 0; i < L; i++) { const cnt = {}; items.forEach(n => cnt[n[i]] = (cnt[n[i]] || 0) + 1); const top = Object.entries(cnt).sort((a, b) => b[1] - a[1] || (c.rep[i] === a[0] ? -1 : 1))[0]; v += top[0]; agree += top[1] / items.length }
+      if (!seen.has(v)) { seen.add(v); out.push({ v, agree: agree / L, hits: items.filter(n => n === v).length, reads: items.length, conf: confOf(v) }) }
+    });
   });
   reads.forEach(r => r.nums.forEach(n => { if (!seen.has(n) && n.length >= 2 && !lens.includes(n.length)) { seen.add(n); out.push({ v: n, agree: 0, hits: 1, reads: 1, conf: confOf(n), badLen: true }) } }));
   return out;
@@ -1000,7 +1011,7 @@ function heroRest(r, shown) {
   if (!rows.length) return '';
   return `<div class="mt-3 pt-3 border-t border-white/25 space-y-2">${rows.map(g => `<div><div class="flex justify-between text-[11px] opacity-90"><span class="font-semibold">${esc(g.name)}</span><span>${esc(MATCH_LABEL[g.match] || '')}${g.reward ? ' · ' + fmt(g.reward) : ''}</span></div><div class="flex flex-wrap gap-1 mt-1">${g.numbers.map(n => `<span class="font-mono text-[12px] px-1.5 py-0.5 rounded-md bg-white/15">${esc(n)}</span>`).join('')}</div></div>`).join('')}</div>`;
 }
-const hanoiSp = r => (r.lottery === 'hanoi' || (LOTTO[r.lottery] || {}).sub === 'hanoi') ? ((grp(r, 'hsp').numbers[0]) || (grp(r, 'v_0').numbers[0]) || '') : '';
+const hanoiSp = r => (r.lottery === 'hanoi' || (LOTTO[r.lottery] || {}).sub === 'hanoi') ? ((grp(r, 'hsp').numbers[0]) || (grp(r, 'v_0').numbers[0]) || (grp(r, 'v_db').numbers[0]) || '') : '';
 function heroCard(r) {
   const th = r.lottery === 'thai' && grp(r, 'prizeFirst').numbers.length;
   let inner;
@@ -1014,7 +1025,7 @@ function heroCard(r) {
     const ids = [['h4', 'เลข 4 ตัว'], ['h3', '3 ตัวบน'], ['h2', '2 ตัวบน'], ['h2b', '2 ตัวล่าง']];
     inner = `<div class="text-xs opacity-80">รางวัลพิเศษ</div><div class="text-4xl font-mono font-extrabold tracking-widest my-1">${esc(sp)}</div>
       <div class="grid grid-cols-2 gap-2 mt-3">${ids.map(([id, n]) => `<div class="bg-white/15 rounded-xl p-2 text-center"><div class="text-[11px] opacity-80">${n}</div><div class="font-mono font-bold">${esc(val(id))}</div></div>`).join('')}</div>
-      ${sub ? heroRest(r, ['hsp', 'v_0', 'h4', 'h3', 'h2', 'h2b']) : ''}`;   // ปกติ: แถบกะทัดรัด รางวัลอื่นดูในรายการด้านล่าง
+      ${sub ? heroRest(r, ['hsp', 'v_0', 'v_db', 'h4', 'h3', 'h2', 'h2b']) : ''}`;   // ปกติ: แถบกะทัดรัด รางวัลอื่นดูในรายการด้านล่าง
   } else {
     inner = `<div class="grid grid-cols-2 gap-2">${r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => `<div class="bg-white/15 rounded-xl p-2"><div class="text-[11px] opacity-80">${esc(g.name)}</div><div class="font-mono font-bold break-all">${esc(g.numbers.slice(0, 4).join(' '))}</div></div>`).join('') || '<div class="text-sm opacity-80 col-span-2">ยังไม่ได้กรอกเลขรางวัล</div>'}</div>${heroRest(r, r.groups.filter(g => g.numbers.length).slice(0, 4).map(g => g.id))}`;
   }
@@ -1053,6 +1064,7 @@ const VIEWS = {
       <button class="text-rose-500 px-1" onclick="A.tDel(${i})" aria-label="ลบ">✕</button></div>`).join('');
     let res = '';
     const hitSet = new Set();
+    if (S.lastCheck && r && S.lastCheck.ref !== resKey(r)) S.lastCheck = null;   // ผลที่ตรวจไว้เป็นของงวดอื่น → ไม่แสดงปนกับงวดปัจจุบัน
     if (S.lastCheck) {
       const total = S.lastCheck.reduce((a, c) => a + c.total, 0), won = S.lastCheck.filter(c => c.hits.length).length;
       S.lastCheck.forEach(c => c.hits.forEach(h => hitSet.add(h.g.id + '|' + h.num)));
@@ -1286,8 +1298,8 @@ const A = {
   cClear() { S.cands = []; S.notes = []; Cam.last = ''; renderCands() },
   cAdd() {
     const sel = S.cands.filter(c => c.checked && c.v); if (!sel.length) return toast('ยังไม่ได้เลือกเลข');
-    const n = addTickets(sel.map(c => c.v), 'scan'); S.cands = S.cands.filter(c => !(c.checked && c.v));
-    toast('เพิ่ม ' + n + ' ใบแล้ว — ตรวจเลขให้ตรงสลากก่อนกดตรวจผล'); renderCands();
+    const n = addTickets(sel.map(c => c.v), 'scan'), added = new Set(sel.slice(0, n).map(c => c.id)); S.cands = S.cands.filter(c => !added.has(c.id));
+    toast(n < sel.length ? 'เพิ่มได้ ' + n + ' ใบ (ถึงสูงสุด ' + maxTickets() + ' ใบ) เหลือ ' + (sel.length - n) + ' เลขในรายการ' : 'เพิ่ม ' + n + ' ใบแล้ว — ตรวจเลขให้ตรงสลากก่อนกดตรวจผล'); renderCands();
   },
   async files(files) {
     const list = [...files].filter(f => f.type.startsWith('image/')); if (!list.length) return;
@@ -1321,6 +1333,7 @@ const A = {
   cfOk() { S.tickets.forEach(t => { if (t.v) t.ok = true }); closeModal(); render(); A.check() },
   doCheck(r, ts) {
     S.lastCheck = ts.map(t => { const hits = checkTicket(t.v, r); return { t: t.v, hits, total: hits.reduce((a, h) => a + (h.g.reward || 0), 0) } });
+    S.lastCheck.ref = resKey(r);
     if (r.source === 'demo') { render(); const de = $('#chkres'); if (de) de.scrollIntoView({ behavior: 'smooth', block: 'start' }); return }
     S.lastCheck.forEach(c => S.checks.unshift({ ts: Date.now(), lot: S.lottery, date: r.date, num: c.t, wins: c.hits.map(h => h.g.name), total: c.total }));
     S.checks = S.checks.slice(0, 100); LS.set('checks', S.checks);
@@ -1333,24 +1346,25 @@ const A = {
     if (S.lottery !== 'thai') {
       const l = S.mres[S.lottery] || [], W = WEB[S.lottery];
       if (!l.length && !W) return A.editResult();
-      return openModal(`<div class="font-bold mb-2">ผลที่บันทึกไว้</div>${W && W.hist ? `<button class="${BP} w-full mb-2" onclick="closeModal();loadWebHistory('${S.lottery}',14)">⬇️ ดึงผลย้อนหลัง 14 วันจากเว็บ</button>` : ''}${!l.length ? '<div class="text-sm text-slate-500 mb-2">ยังไม่มีผลที่บันทึกไว้</div>' : ''}<div class="space-y-2">${l.map((r, i) => `<button class="${BS} w-full justify-between" onclick="A.pickSaved(${i})"><span>งวด ${esc(r.date || '—')}</span>${i === 0 ? '<span class="text-xs">ใช้อยู่</span>' : ''}</button>`).join('')}</div>`);
+      return openModal(`<div class="font-bold mb-2">ผลที่บันทึกไว้</div>${W && W.hist ? `<button class="${BP} w-full mb-2" onclick="closeModal();loadWebHistory('${S.lottery}',14)">⬇️ ดึงผลย้อนหลัง 14 วันจากเว็บ</button>` : ''}${!l.length ? '<div class="text-sm text-slate-500 mb-2">ยังไม่มีผลที่บันทึกไว้</div>' : ''}<div class="space-y-2">${(S.pickSnap = l.map(r => r.id), l).map((r, i) => `<button class="${BS} w-full justify-between" onclick="A.pickSaved(${i})"><span>งวด ${esc(r.date || '—')}</span>${i === 0 ? '<span class="text-xs">ใช้อยู่</span>' : ''}</button>`).join('')}</div>`);
     }
     A.renderPicker(); if (!S.listCache.length) await A.morePicker();
   },
   renderPicker(err) {
     openModal(`<div class="flex justify-between items-center mb-2"><div class="font-bold">ตรวจงวดย้อนหลัง</div><button onclick="closeModal()" class="text-xl">✕</button></div>
       <button class="${BP} w-full mb-2" onclick="A.pickLatest()">งวดล่าสุด</button>${err ? `<div class="text-sm text-rose-600 mb-2">${esc(err)}<div class="flex gap-2 mt-2"><button class="${BS}" onclick="A.useDemo()">🧪 ใช้ข้อมูลตัวอย่าง</button><button class="${BS}" onclick="A.editResult()">✍️ กรอกผลเอง</button></div></div>` : ''}
-      <div class="space-y-1">${S.listCache.map(it => `<button class="${BS} w-full justify-start" onclick="A.pickDraw('${esc(it.id)}')">${esc(it.date || it.id)}</button>`).join('') || (err ? '' : '<div class="text-sm text-slate-500">กำลังโหลดรายการ…</div>')}</div>
+      <div class="space-y-1">${S.listCache.map((it, i) => `<button class="${BS} w-full justify-start" onclick="A.pickDrawAt(${i})">${esc(it.date || it.id)}</button>`).join('') || (err ? '' : '<div class="text-sm text-slate-500">กำลังโหลดรายการ…</div>')}</div>
       ${S.listEnd ? '' : `<button class="${BS} w-full mt-2" onclick="A.morePicker()">โหลดเพิ่ม</button>`}`);
   },
   async morePicker() { try { await fetchListPage(); A.renderPicker() } catch (e) { A.renderPicker('โหลดรายการไม่สำเร็จ: ' + e.message) } },
+  pickDrawAt(i) { const it = S.listCache[i]; if (it) A.pickDraw(it.id) },   // ไม่ใส่ข้อมูลจากภายนอกลงใน onclick
   async pickDraw(id) {
     toast('กำลังโหลดผล…');
     try { S.drawCache[id] = S.drawCache[id] || await loadDraw(id); const it = S.listCache.find(x => String(x.id) === String(id)); S.draw = S.drawCache[id]; if (it && !S.draw.date) S.draw.date = it.date; S.drawState = 'ok'; S.useManual = false; S.lastCheck = null; delete S.demo.thai; closeModal(); render() }
     catch (e) { toast('โหลดไม่สำเร็จ: ' + e.message) }
   },
   pickLatest() { closeModal(); S.useManual = false; S.lastCheck = null; loadHome() },
-  pickSaved(i) { const l = S.mres[S.lottery]; if (!l[i]) return; S.sel[S.lottery] = l[i].id; S.lastCheck = null; delete S.demo[S.lottery]; closeModal(); render() },
+  pickSaved(i) { const id = (S.pickSnap || [])[i]; if (!id || !(S.mres[S.lottery] || []).some(r => r.id === id)) return toast('รายการเปลี่ยนไปแล้ว เปิดใหม่อีกครั้ง'); S.sel[S.lottery] = id; S.lastCheck = null; delete S.demo[S.lottery]; closeModal(); render() },
   /* manual result editor */
   editResult() {
     const r = curResult();
@@ -1379,7 +1393,7 @@ const A = {
   saveEdit() {
     const e = S.edit, lot = S.lottery;
     const res = { lottery: lot, date: e.date || new Date().toLocaleDateString('th-TH'), id: 'manual-' + Date.now(), groups: e.groups, source: 'manual' };
-    S.mres[lot] = [res, ...(S.mres[lot] || [])].slice(0, 120); LS.set('mres', S.mres);
+    S.mres[lot] = [res, ...(S.mres[lot] || [])].slice(0, 120); LS.set('mres', S.mres); S.sel[lot] = res.id;   // ปักผลที่กรอกเองไว้ ไม่ให้ถูกงวดอื่นแซง
     S.useManual = true; S.lastCheck = null; delete S.demo[lot]; closeModal(); toast('บันทึกผลรางวัลแล้ว'); render();
   },
   useDemo() { S.demo[S.lottery] = demoResult(S.lottery); S.lastCheck = null; closeModal(); render(); toast('โหมดข้อมูลตัวอย่าง — ไม่ใช่ผลรางวัลจริง') },
